@@ -5,5 +5,12 @@
 #include <Arduino.h>
 #include "WriteRequest.h"
 
+#if defined(ESP32)
+
+#include "clients/ESP32Client.h"
+typedef ESP32Client Prometheus;
+
+#endif
+
 
 #endif

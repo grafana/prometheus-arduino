@@ -12,7 +12,7 @@ public:
     WriteRequest(int numSeries);
     ~WriteRequest();
 
-    bool addTimeSeries(TimeSeries* series);
+    bool addTimeSeries(TimeSeries& series);
 
     uint16_t estimateProtoBuffSize();
     uint16_t toSnappyProto(char* output);

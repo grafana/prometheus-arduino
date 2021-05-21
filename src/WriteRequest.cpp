@@ -9,13 +9,13 @@ WriteRequest::~WriteRequest() {
     delete[] _series;
 }
 
-bool WriteRequest::addTimeSeries(TimeSeries* series) {
+bool WriteRequest::addTimeSeries(TimeSeries& series) {
     if (_seriesPointer >= _seriesCount) {
         errmsg = "cannot add series, max number of series have already been added.";
         return false;
     }
 
-    _series[_seriesPointer] = series;
+    _series[_seriesPointer] = &series;
     _seriesPointer++;
 }
 
@@ -32,7 +32,6 @@ uint16_t WriteRequest::toSnappyProto(char* output) {
     prometheus_WriteRequest rw = {};
     rw.timeseries.arg = &st;
     rw.timeseries.funcs.encode = &callback_encode_timeseries;
-    Serial.println("1");
     if (!pb_encode(&os, prometheus_WriteRequest_fields, &rw)) {
         errmsg = PB_GET_ERROR(&os);
         return false;
@@ -60,17 +59,12 @@ uint16_t WriteRequest::toSnappyProto(char* output) {
 }
 
 bool WriteRequest::callback_encode_timeseries(pb_ostream_t* ostream, const pb_field_t* field, void* const* arg) {
-    Serial.println("2");
     SeriesTuple* st = (SeriesTuple*)*arg;
-    Serial.print("Series Count: ");
-    Serial.println(st->seriesCnt);
     for (int i = 0; i < st->seriesCnt; i++) {
         if (!pb_encode_tag_for_field(ostream, field)) {
             return false;
         }
         TimeSeries* series = st->series[i];
-        Serial.print("_batchPointer=");
-        Serial.println(series->_batchPointer);
         prometheus_TimeSeries ts = {};
         ts.labels.arg = series;
         ts.labels.funcs.encode = &callback_encode_labels;
@@ -83,7 +77,6 @@ bool WriteRequest::callback_encode_timeseries(pb_ostream_t* ostream, const pb_fi
 }
 
 bool WriteRequest::callback_encode_labels(pb_ostream_t* ostream, const pb_field_t* field, void* const* arg) {
-    Serial.println("3");
     TimeSeries* series = (TimeSeries*)*arg;
 
     for (int i = 0; i < series->_numLabels; i++) {
@@ -102,11 +95,7 @@ bool WriteRequest::callback_encode_labels(pb_ostream_t* ostream, const pb_field_
 }
 
 bool WriteRequest::callback_encode_string(pb_ostream_t* ostream, const pb_field_t* field, void* const* arg) {
-    Serial.println("4");
     char* s = (char*)*arg;
-
-    Serial.print("String: ");
-    Serial.println(s);
 
     if (!pb_encode_tag_for_field(ostream, field)) {
         return false;
@@ -118,17 +107,13 @@ bool WriteRequest::callback_encode_string(pb_ostream_t* ostream, const pb_field_
 }
 
 bool WriteRequest::callback_encode_samples(pb_ostream_t* ostream, const pb_field_t* field, void* const* arg) {
-    Serial.println("5");
     TimeSeries* series = (TimeSeries*)*arg;
-    Serial.print("_batchPointer=");
-    Serial.println(series->_batchPointer);
     for (int i = 0; i < series->_batchPointer; i++) {
         if (!pb_encode_tag_for_field(ostream, field)) {
             return false;
         }
         prometheus_Sample s = {};
         s.timestamp = series->_batch[i]->tsMillis;
-        Serial.println(s.timestamp);
         s.value = series->_batch[i]->val;
         if (!pb_encode_submessage(ostream, prometheus_Sample_fields, &s)) {
             return false;
