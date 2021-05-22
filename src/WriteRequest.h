@@ -6,21 +6,27 @@
 #include "proto/pb.h"
 #include "proto/pb_encode.h"
 #include "proto/remote.pb.h"
+#include "PromDebug.h"
 
 class WriteRequest {
 public:
-    WriteRequest(int numSeries);
+    WriteRequest(uint32_t numSeries, uint32_t bufferSize = 512);
     ~WriteRequest();
 
-    bool addTimeSeries(TimeSeries& series);
+    void setDebug(Stream& stream);
 
-    uint16_t estimateProtoBuffSize();
-    uint16_t toSnappyProto(uint8_t* output);
+    bool addTimeSeries(TimeSeries& series);
+    
+    int16_t toSnappyProto(uint8_t* output);
+
+    uint32_t getBufferSize();
 
     const char* errmsg;
 
 private:
-    int _seriesCount = 0;
+    uint32_t _seriesCount = 0;
+    uint32_t _bufferSize = 0;
+    Stream* _debug = nullptr;
 
     TimeSeries** _series = nullptr;
     uint8_t _seriesPointer = 0;

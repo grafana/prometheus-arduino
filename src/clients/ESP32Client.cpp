@@ -28,10 +28,6 @@ bool ESP32Client::_begin() {
     }
 
     _httpClient = new HttpClient(*_client, _url, _port);
-    _httpClient->setTimeout(15000);
-    _httpClient->setHttpResponseTimeout(15000);
-    _httpClient->connectionKeepAlive();
-
 
     DEBUG_PRINTLN("Connecting Wifi");
 
@@ -46,48 +42,11 @@ bool ESP32Client::_begin() {
 
     while (sntp_get_sync_status() == SNTP_SYNC_STATUS_RESET) {
         delay(1000);
-        if (_debug) {
-
-        }
         DEBUG_PRINT(".");
     }
 
     DEBUG_PRINTLN("Time set succesfully");
 }
-
-// bool ESP32Client::_send(char* entry, size_t len) {
-//     if (WiFi.status() != WL_CONNECTED) {
-//         WiFi.disconnect();
-//         yield();
-//         _connect();
-//     }
-//     if (_wifiClient) {
-//         _httpClient->begin(_url);
-//         _httpClient->addHeader("Content-Type", "application/x-protobuf");
-//         _httpClient->addHeader("Content-Encoding", "snappy");
-//         int httpCode = _httpClient->POST(reinterpret_cast<uint8_t*>(entry), len);
-//         if (httpCode > 0) {
-//             DEBUG_PRINT("POST...  Code: ");
-//             DEBUG_PRINTLN(httpCode);
-//             if (httpCode >= 400) {
-//                 if (_debug) {
-//                     _httpClient->writeToStream(_debug);
-//                 }
-//             }
-//             DEBUG_PRINTLN();
-//         }
-//         else {
-//             DEBUG_PRINT("POST... Error: ");
-//             DEBUG_PRINTLN(_httpClient->errorToString(httpCode).c_str());
-//         }
-
-//         _httpClient->end();
-//     }
-//     else {
-//         DEBUG_PRINTLN("Uninitialized wifi client, did you call begin()?");
-//     }
-
-// }
 
 void ESP32Client::_connect() {
     DEBUG_PRINT("Connecting to '");

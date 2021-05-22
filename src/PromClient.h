@@ -4,7 +4,9 @@
 #include "WriteRequest.h"
 #include <ArduinoHttpClient.h>
 #include <bearssl_x509.h>
-#include "debug.h"
+#include "PromDebug.h"
+
+static const char UserAgent[] PROGMEM = "prom-arduino/0.1.0";
 
 class PromClient {
 public:
@@ -33,6 +35,8 @@ public:
     bool begin();
     bool send(WriteRequest& req);
     int64_t getTimeMillis();
+
+    const char* errmsg;
 
 protected:
     Stream* _debug = nullptr;

@@ -4,14 +4,15 @@
 #include "certificates.h"
 #include <Prometheus.h>
 
-
+LabelSet job = { "job", "esp32-test" };
+LabelSet host = { "host","esp32" };
 
 Prometheus client;
 WriteRequest req(2);
-LabelSet series1[] = { {"foo","val"},{"bar","val"} };
-TimeSeries ts1(5, "gauge1", series1, 2);
-LabelSet series2[] = { {"foo","val2"},{"bar","val2"} };
-TimeSeries ts2(5, "gauge2", series2, 2);
+LabelSet series1[] = { job, host, {"bar","val"} };
+TimeSeries ts1(5, "gauge1", series1, 3);
+LabelSet series2[] = { job, host, {"bar","val2"} };
+TimeSeries ts2(5, "gauge1", series2, 3);
 
 int loopCounter = 0;
 
@@ -37,6 +38,7 @@ void setup() {
 
     req.addTimeSeries(ts1);
     req.addTimeSeries(ts2);
+    req.setDebug(Serial);
 
 };
 
@@ -51,7 +53,9 @@ void loop() {
     {
         //send
         loopCounter = 0;
-        client.send(req);
+        if (!client.send(req)) {
+            Serial.println(client.errmsg);
+        }
         ts1.resetSamples();
         ts2.resetSamples();
     }

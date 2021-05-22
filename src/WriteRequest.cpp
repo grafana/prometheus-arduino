@@ -1,12 +1,16 @@
 #include "WriteRequest.h"
 
 
-WriteRequest::WriteRequest(int numSeries) : _seriesCount(numSeries) {
+WriteRequest::WriteRequest(uint32_t numSeries, uint32_t bufferSize) : _seriesCount(numSeries), _bufferSize(bufferSize) {
     _series = new TimeSeries * [numSeries];
 }
 
 WriteRequest::~WriteRequest() {
     delete[] _series;
+}
+
+void WriteRequest::setDebug(Stream& stream) {
+    _debug = &stream;
 }
 
 bool WriteRequest::addTimeSeries(TimeSeries& series) {
@@ -19,9 +23,14 @@ bool WriteRequest::addTimeSeries(TimeSeries& series) {
     _seriesPointer++;
 }
 
-uint16_t WriteRequest::toSnappyProto(uint8_t* output) {
-    //FIXME Buffer Size
-    uint8_t buffer[512];
+uint32_t WriteRequest::getBufferSize() {
+    return _bufferSize;
+}
+
+int16_t WriteRequest::toSnappyProto(uint8_t* output) {
+    DEBUG_PRINT("Begin serialization: ");
+    PRINT_HEAP();
+    uint8_t buffer[_bufferSize];
     pb_ostream_t os = pb_ostream_from_buffer(buffer, sizeof(buffer));
 
     SeriesTuple st = SeriesTuple{
@@ -33,27 +42,50 @@ uint16_t WriteRequest::toSnappyProto(uint8_t* output) {
     rw.timeseries.arg = &st;
     rw.timeseries.funcs.encode = &callback_encode_timeseries;
     if (!pb_encode(&os, prometheus_WriteRequest_fields, &rw)) {
-        errmsg = PB_GET_ERROR(&os);
-        return false;
+        DEBUG_PRINT("Error from proto encode: ");
+        DEBUG_PRINTLN(PB_GET_ERROR(&os));
+        errmsg = "Error creating protobuf, enable debug logging to see more details";
+        return -1;
     }
 
-    for (uint8_t i = 0; i < os.bytes_written; i++)
-    {
-        if (buffer[i] < 0x10)
-        {
-            Serial.print(0);
-        }
-        Serial.print(buffer[i], HEX);
-    }
-    Serial.println();
+    DEBUG_PRINT("Bytes used for serialization: ");
+    DEBUG_PRINTLN(os.bytes_written);
+
+    DEBUG_PRINT("After serialization: ");
+    PRINT_HEAP();
+
+    // for (uint8_t i = 0; i < os.bytes_written; i++)
+    // {
+    //     if (buffer[i] < 0x10)
+    //     {
+    //         Serial.print(0);
+    //     }
+    //     Serial.print(buffer[i], HEX);
+    // }
+    // Serial.println();
 
     snappy_env env;
     snappy_init_env(&env);
-    //   LOKI_DEBUG_PRINT("After Init_env Free Mem:");
-    //   LOKI_DEBUG_PRINTLN(freeMemory());
+    DEBUG_PRINT("After Compression Init: ");
+    PRINT_HEAP();
+
     size_t len = snappy_max_compressed_length(os.bytes_written);
-    snappy_compress(&env, (char*)buffer, os.bytes_written, (char *)output, &len);
+    DEBUG_PRINT("Required buffer size for compression: ");
+    DEBUG_PRINTLN(len);
+
+    if (len > _bufferSize) {
+        errmsg = "WriteRequest bufferSize is too small and will be overun during compression! Enable debug logging to see required buffer size";
+        return -1;
+    }
+
+    snappy_compress(&env, (char*)buffer, os.bytes_written, (char*)output, &len);
     snappy_free_env(&env);
+
+    DEBUG_PRINT("Compressed Len: ");
+    DEBUG_PRINTLN(len);
+
+    DEBUG_PRINT("After Compression: ");
+    PRINT_HEAP();
 
     return len;
 }
