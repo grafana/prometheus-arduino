@@ -15,7 +15,7 @@ public:
     bool addTimeSeries(TimeSeries& series);
 
     uint16_t estimateProtoBuffSize();
-    uint16_t toSnappyProto(char* output);
+    uint16_t toSnappyProto(uint8_t* output);
 
     const char* errmsg;
 

@@ -19,7 +19,7 @@ bool WriteRequest::addTimeSeries(TimeSeries& series) {
     _seriesPointer++;
 }
 
-uint16_t WriteRequest::toSnappyProto(char* output) {
+uint16_t WriteRequest::toSnappyProto(uint8_t* output) {
     //FIXME Buffer Size
     uint8_t buffer[512];
     pb_ostream_t os = pb_ostream_from_buffer(buffer, sizeof(buffer));
@@ -52,7 +52,7 @@ uint16_t WriteRequest::toSnappyProto(char* output) {
     //   LOKI_DEBUG_PRINT("After Init_env Free Mem:");
     //   LOKI_DEBUG_PRINTLN(freeMemory());
     size_t len = snappy_max_compressed_length(os.bytes_written);
-    snappy_compress(&env, (char*)buffer, os.bytes_written, output, &len);
+    snappy_compress(&env, (char*)buffer, os.bytes_written, (char *)output, &len);
     snappy_free_env(&env);
 
     return len;

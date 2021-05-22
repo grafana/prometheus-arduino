@@ -1,6 +1,9 @@
 
+#include <bearssl_x509.h>
 #include "config.h"
+#include "certificates.h"
 #include <Prometheus.h>
+
 
 
 Prometheus client;
@@ -20,12 +23,15 @@ void setup() {
 
     Serial.println("Starting");
 
-    client.setUrl("172.20.70.20");
+    client.setUrl("prometheus-us-central1.grafana.net");
+    client.setPath("/api/prom/push");
+    client.setPort(443);
+    client.setUser(GC_USER);
+    client.setPass(GC_PASS);
+    client.setUseTls(true);
+    client.setCerts(TAs, TAs_NUM);
     client.setWifiSsid(WIFI_SSID);
     client.setWifiPass(WIFI_PASSWORD);
-    client.setPath("/api/v1/push");
-    client.setPort(8080);
-    client.setNtpServer("172.20.31.1");
     client.setDebug(Serial);
     client.begin();
 
