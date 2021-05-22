@@ -12,7 +12,7 @@ extern "C"
  * Index:    0
  * Label:    USERTrust RSA Certification Authority
  * Subject:  CN=USERTrust RSA Certification Authority,O=The USERTRUST Network,L=Jersey City,ST=New Jersey,C=US
- * Domain(s): logs-prod-us-central1.grafana.net
+ * Domain(s): prometheus-us-central1.grafana.net
  */
 
 #define TAs_NUM 1

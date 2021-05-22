@@ -10,6 +10,10 @@
 #include "clients/ESP32Client.h"
 typedef ESP32Client Prometheus;
 
+#else 
+
+#error "Unknown board type, PrometheusArduino does not support this board."
+
 #endif
 
 
