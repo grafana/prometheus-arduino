@@ -40,7 +40,7 @@ extern "C" char* sbrk(int incr);
 extern char* __brkval;
 #endif  // __arm__
 
-inlne int freeMemory() {
+inline int freeMemory() {
     char top;
 #ifdef __arm__
     return &top - reinterpret_cast<char*>(sbrk(0));

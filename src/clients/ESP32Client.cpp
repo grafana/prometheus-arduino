@@ -48,6 +48,21 @@ bool ESP32Client::_begin() {
     DEBUG_PRINTLN("Time set succesfully");
 }
 
+int64_t ESP32Client::_getTimeMillis() {
+    struct timeval tv_now;
+    gettimeofday(&tv_now, NULL);
+    return (uint64_t)tv_now.tv_sec * 1000L + (uint64_t)tv_now.tv_usec / 1000;
+}
+
+void ESP32Client::_checkConnection() {
+    // reconnect to WiFi if required
+    if (WiFi.status() != WL_CONNECTED) {
+        WiFi.disconnect();
+        yield();
+        _connect();
+    }
+};
+
 void ESP32Client::_connect() {
     DEBUG_PRINT("Connecting to '");
     DEBUG_PRINT(_wifiSsid);
@@ -64,12 +79,6 @@ void ESP32Client::_connect() {
 
     DEBUG_PRINT("IP address: ");
     DEBUG_PRINTLN(WiFi.localIP());
-}
-
-int64_t ESP32Client::_getTimeMillis() {
-    struct timeval tv_now;
-    gettimeofday(&tv_now, NULL);
-    return (uint64_t)tv_now.tv_sec * 1000L + (uint64_t)tv_now.tv_usec / 1000;
 }
 
 #endif

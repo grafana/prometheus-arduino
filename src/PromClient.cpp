@@ -56,6 +56,8 @@ Client* PromClient::getClient() {
 }
 
 bool PromClient::begin() {
+    errmsg = nullptr;
+    //TODO check to make sure url/port/path are set.
     bool res = _begin();
     if (!res) {
         errmsg = "failed to init the client, enable debug logging for more info";
@@ -67,17 +69,18 @@ bool PromClient::begin() {
     return true;
 }
 
-bool PromClient::send(WriteRequest& req) {
+PromClient::SendResult PromClient::send(WriteRequest& req) {
+    errmsg = nullptr;
     uint8_t buff[req.getBufferSize()] = { 0 };
     int16_t len = req.toSnappyProto(buff);
     if (len <= 0) {
         errmsg = req.errmsg;
-        return false;
+        return PromClient::SendResult::FAILED_DONT_RETRY;
     }
     return _send(buff, len);
 }
 
-bool PromClient::_send(uint8_t* entry, size_t len) {
+PromClient::SendResult PromClient::_send(uint8_t* entry, size_t len) {
     DEBUG_PRINTLN("Sending To Prometheus");
 
     // Make a HTTP request:
@@ -94,7 +97,7 @@ bool PromClient::_send(uint8_t* entry, size_t len) {
                 _client->clearWriteError();
             }
             errmsg = "Failed to connect to server, enable debug logging for more info";
-            return false;
+            return PromClient::SendResult::FAILED_RETRYABLE;
         }
         else {
             DEBUG_PRINTLN("Connected.")
@@ -134,7 +137,8 @@ bool PromClient::_send(uint8_t* entry, size_t len) {
         waitAttempts++;
     }
     int statusCode = _httpClient->responseStatusCode();
-    if (statusCode / 100 == 2) {
+    int statusClass = statusCode / 100;
+    if (statusClass == 2) {
         DEBUG_PRINTLN("Prom Send Succeeded");
         // We don't use the _httpClient->responseBody() method both because it allocates a string
         // and also because it doesn't understand a 204 response code not having a content-length
@@ -144,17 +148,27 @@ bool PromClient::_send(uint8_t* entry, size_t len) {
             DEBUG_PRINT(c);
         }
     }
-    else {
+    else if (statusClass == 4) {
         DEBUG_PRINT("Prom Send Failed with code: ");
-        DEBUG_PRINT(statusCode);
+        DEBUG_PRINTLN(statusCode);
         while (_client->available()) {
             char c = _client->read();
             DEBUG_PRINT(c);
         }
-        errmsg = "Failed to send to prometheus, enable debug logging for more info";
-        return false;
+        errmsg = "Failed to send to prometheus, 4xx response";
+        return PromClient::SendResult::FAILED_DONT_RETRY;
     }
-    return true;
+    else {
+        DEBUG_PRINT("Prom Send Failed with code: ");
+        DEBUG_PRINTLN(statusCode);
+        while (_client->available()) {
+            char c = _client->read();
+            DEBUG_PRINT(c);
+        }
+        errmsg = "Failed to send to prometheus, 5xx or unexpected status code";
+        return PromClient::SendResult::FAILED_RETRYABLE;
+    }
+    return PromClient::SendResult::SUCCESS;
 }
 
 

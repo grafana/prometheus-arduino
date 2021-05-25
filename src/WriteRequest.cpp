@@ -14,6 +14,7 @@ void WriteRequest::setDebug(Stream& stream) {
 }
 
 bool WriteRequest::addTimeSeries(TimeSeries& series) {
+    errmsg = nullptr;
     if (_seriesPointer >= _seriesCount) {
         errmsg = "cannot add series, max number of series have already been added.";
         return false;
@@ -21,6 +22,7 @@ bool WriteRequest::addTimeSeries(TimeSeries& series) {
 
     _series[_seriesPointer] = &series;
     _seriesPointer++;
+    return true;
 }
 
 uint32_t WriteRequest::getBufferSize() {
@@ -28,6 +30,7 @@ uint32_t WriteRequest::getBufferSize() {
 }
 
 int16_t WriteRequest::toSnappyProto(uint8_t* output) {
+    errmsg = nullptr;
     DEBUG_PRINT("Begin serialization: ");
     PRINT_HEAP();
     uint8_t buffer[_bufferSize];
@@ -58,11 +61,11 @@ int16_t WriteRequest::toSnappyProto(uint8_t* output) {
     // {
     //     if (buffer[i] < 0x10)
     //     {
-    //         Serial.print(0);
+    //         DEBUG_PRINT(0);
     //     }
-    //     Serial.print(buffer[i], HEX);
+    //     DEBUG_PRINT(buffer[i], HEX);
     // }
-    // Serial.println();
+    // DEBUG_PRINTLN();
 
     snappy_env env;
     snappy_init_env(&env);

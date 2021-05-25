@@ -19,12 +19,11 @@ public:
     ~ESP32Client();
 protected:
     bool _begin();
-    // bool _send(char* entry, size_t len);
     int64_t _getTimeMillis();
+    void _checkConnection();
 
 private:
     WiFiClient* _wifiClient;
-    // HttpClient* _httpClient;
     void _connect();
 
 };

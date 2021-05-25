@@ -31,6 +31,7 @@ TimeSeries::~TimeSeries() {
 }
 
 bool TimeSeries::addSample(int64_t tsMillis, double val) {
+    errmsg = nullptr;
     if (_batchPointer >= _batchSize) {
         errmsg = "batch full";
         return false;
@@ -39,6 +40,8 @@ bool TimeSeries::addSample(int64_t tsMillis, double val) {
     _batch[_batchPointer]->tsMillis = tsMillis;
     _batch[_batchPointer]->val = val;
     _batchPointer++;
+
+    return true;
 }
 
 void TimeSeries::resetSamples() {

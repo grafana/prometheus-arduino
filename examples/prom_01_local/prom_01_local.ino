@@ -47,7 +47,7 @@ void setup() {
     client.setWifiSsid(WIFI_SSID);
     client.setWifiPass(WIFI_PASSWORD);
     client.setDebug(Serial);  // Remove this line to disable debug logging of the client.
-    if (!client.begin()){
+    if (!client.begin()) {
         Serial.println(client.errmsg);
     }
 
@@ -70,9 +70,13 @@ void loop() {
     if (loopCounter >= 5) {
         //Send
         loopCounter = 0;
-        if (!client.send(req)) {
+        PromClient::SendResult res = client.send(req);
+        if (!res == PromClient::SendResult::SUCCESS) {
             Serial.println(client.errmsg);
             // Note: additional retries or error handling could be implemented here.
+            // the result could also be:
+            // PromClient::SendResult::FAILED_DONT_RETRY
+            // PromClient::SendResult::FAILED_RETRYABLE
         }
         // Batches are not automatically reset so that additional retry logic could be implemented by the library user.
         // Reset batches after a succesful send.
