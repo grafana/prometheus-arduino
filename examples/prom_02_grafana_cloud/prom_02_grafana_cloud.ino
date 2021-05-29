@@ -9,7 +9,7 @@ PromLokiTransport transport;
 PromClient client(transport);
 
 // Create a write request for 2 series.
-WriteRequest req(2);
+WriteRequest req(2,1024);
 
 // Check out https://prometheus.io/docs/practices/naming/ for metric naming and label conventions.
 // This library does not currently create different metric types like gauges, counters, and histograms
@@ -17,23 +17,14 @@ WriteRequest req(2);
 // a naming convention and a usage convention so it's possible to create any of these yourself.
 // See the README at https://github.com/grafana/prometheus-arduino for more info.
 
-// Define common labels.
-LabelSet job = { "job", "esp32-test" };
-LabelSet host = { "host","esp32" };
+// Define a TimeSeries which can hold up to 5 samples, has a name of `uptime_milliseconds`
+TimeSeries ts1(5, "uptime_milliseconds_total", "job=\"esp32-test\",host=\"esp32\"");
 
-// Create a labelset array for the 2 labels.
-LabelSet series1[] = { job, host };
-// Define a TimeSeries which can hold up to 5 samples, has a name of `uptime_milliseconds`, uses the above labels of which there are 2
-TimeSeries ts1(5, "uptime_milliseconds_total", series1, 2);
-
-// Create a labelset array for the second timeseries but add a third label.
-LabelSet series2[] = { job, host, {"foo","bar"} };
-// Define a TimeSeries which can hold up to 5 samples, has a name of `heap_free_bytes`, uses the above labels which there are 3
-TimeSeries ts2(5, "heap_free_bytes", series2, 3);
+// Define a TimeSeries which can hold up to 5 samples, has a name of `heap_free_bytes`
+TimeSeries ts2(5, "heap_free_bytes", "job=\"esp32-test\",host=\"esp32\",foo=\"bar\"");
 
 // Note, metrics with the same name and different labels are actually different series and you would need to define them separately
-// LabelSet series3[] = { job, host, {"foo","bar2"} };
-// TimeSeries ts3(5, "heap_free_bytes", series3, 3);
+//TimeSeries ts2(5, "heap_free_bytes", "job=\"esp32-test\",host=\"esp32\",foo=\"bar\"");
 
 int loopCounter = 0;
 
@@ -43,6 +34,8 @@ void setup() {
         delay(10);
 
     Serial.println("Starting");
+    Serial.print("Free Mem Before Setup: ");
+    Serial.println(freeMemory());
 
     // Configure and start the transport layer
     transport.setUseTls(true);
@@ -71,6 +64,9 @@ void setup() {
     req.addTimeSeries(ts1);
     req.addTimeSeries(ts2);
     req.setDebug(Serial);  // Remove this line to disable debug logging of the write request serialization and compression.
+
+    Serial.print("Free Mem After Setup: ");
+    Serial.println(freeMemory());
 
 };
 

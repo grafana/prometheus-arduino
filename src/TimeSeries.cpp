@@ -1,6 +1,6 @@
 #include "TimeSeries.h"
 
-TimeSeries::TimeSeries(uint16_t batchSize, char* name, LabelSet labels[], uint8_t numLabelPairs) : _batchSize(batchSize) {
+TimeSeries::TimeSeries(uint16_t batchSize, const char* name, char* labels) : _batchSize(batchSize) {
     _batch = new TimeSeries::Sample * [batchSize];
 
     //Pre-allocate the memory for each Sample
@@ -9,17 +9,95 @@ TimeSeries::TimeSeries(uint16_t batchSize, char* name, LabelSet labels[], uint8_
         _batch[i] = s;
     }
 
+    // Count the number of labels
+    uint8_t numLabelPairs = 0;
+    uint16_t lc = 0;
+    while (labels[lc] != '\0') {
+        if (labels[lc] == '=') {
+            numLabelPairs++;
+        }
+        lc++;
+    }
+
     // Add one to store the __name__ label
     _numLabels = numLabelPairs + 1;
     _labels = new TimeSeries::Label * [_numLabels];
-    // Start at 1 because we are going to add the name label at position 0
-    for (int i = 1; i < _numLabels; i++) {
-        // Make sure to select from the incoming array starting at the 0 value by subtracting 1 from i
-        TimeSeries::Label* l = new TimeSeries::Label(labels[i - 1].key, labels[i - 1].val);
-        _labels[i] = l;
+
+    uint8_t labelIdx = 0;
+
+    // Make a copy of the name to get a char
+    char nameLabel[strlen(name)];
+    strcpy(nameLabel, name);
+
+    // Set the metric name
+    TimeSeries::Label* l = new TimeSeries::Label("__name__", nameLabel);
+    _labels[labelIdx] = l;
+    labelIdx++;
+
+    // Make a copy so we can modify the labels
+    char modLabels[strlen(labels)];
+    strcpy(modLabels, labels);
+
+    // Split on commas
+    char delim[] = ",";
+    char* ptr = strtok(modLabels, delim);
+
+    while (ptr != NULL) {
+        // Process label pair
+
+        // key and val can't be bigger than the entire pair
+        uint16_t maxlen = strlen(ptr);
+        char key[maxlen];
+        char val[maxlen];
+
+        // Setup some position trackers
+        uint8_t keyIdx = 0;
+        uint8_t valIdx = 0;
+        uint8_t equalPos = 0;
+
+        for (int i = 0; i < maxlen; i++) {
+            if (ptr[i] == '\\' || ptr[i] == '\"' || ptr[i] == '{' || ptr[i] == '}') {
+                // Ignore any backslashes or " or {}
+                continue;
+            }
+            if (ptr[i] == '=') {
+                // If we hit an equals that's the end of the key
+                equalPos = i;
+                break;
+            }
+            key[keyIdx] = ptr[i];
+            keyIdx++;
+        }
+        // Key is oversized, null out the rest of key
+        for (int i = keyIdx; i < maxlen; i++) {
+            key[i] = '\0';
+        }
+
+        // printf("%s\n", key);
+
+        // Do basically the same for the value
+        for (int i = equalPos + 1; i < maxlen; i++) {
+            if (ptr[i] == '\\' || ptr[i] == '\"' || ptr[i] == '{' || ptr[i] == '}') {
+                // Ignore any backslashes or " or {}
+                continue;
+            }
+            val[valIdx] = ptr[i];
+            valIdx++;
+        }
+        // Val is oversized, null out the rest of the val
+        for (int i = valIdx; i < maxlen; i++) {
+            val[i] = '\0';
+        }
+
+        // printf("%s\n", val);
+
+        TimeSeries::Label* l = new TimeSeries::Label(key, val);
+        _labels[labelIdx] = l;
+        labelIdx++;
+
+        // Look for next pair
+        ptr = strtok(NULL, delim);
     }
-    TimeSeries::Label* l = new TimeSeries::Label("__name__", name);
-    _labels[0] = l;
 
 }
 
@@ -57,9 +135,12 @@ TimeSeries::Sample::~Sample() {
 }
 
 TimeSeries::Label::Label(char* k, char* v) {
-    key = (char*)malloc(sizeof(char) * strlen(k));
+    // Make sure to leave room for the null terminator
+    size_t lenk = strlen(k);
+    key = (char*)malloc(sizeof(char) * (lenk + 1));
     strcpy(key, k);
-    val = (char*)malloc(sizeof(char) * strlen(v));
+    size_t lenv = strlen(v);
+    val = (char*)malloc(sizeof(char) * (lenv + 1));
     strcpy(val, v);
 }
 
