@@ -23,7 +23,8 @@
         } \
     } \
 
-
+#ifndef FREEMEM
+#define FREEMEM
 #if defined(ESP32)
 
 #include <Esp.h>
@@ -52,5 +53,7 @@ inline int freeMemory() {
 }
 
 #endif // Type
+
+#endif // FREEMEM
 
 #endif // debug_h

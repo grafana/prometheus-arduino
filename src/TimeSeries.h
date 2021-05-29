@@ -16,7 +16,7 @@ public:
     bool addSample(int64_t tsMillis, double val);
     void resetSamples();
 
-    const char* errmsg;
+    char* errmsg;
 
 private:
     friend class WriteRequest;

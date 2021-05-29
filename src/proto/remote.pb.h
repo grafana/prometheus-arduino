@@ -3,7 +3,7 @@
 
 #ifndef PB_PROMETHEUS_REMOTE_PB_H_INCLUDED
 #define PB_PROMETHEUS_REMOTE_PB_H_INCLUDED
-#include "pb.h"
+#include <pb.h>
 #include "types.pb.h"
 
 #if PB_PROTO_HEADER_VERSION != 40

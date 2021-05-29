@@ -1,10 +1,12 @@
 
-#include <bearssl_x509.h>
+#include <ArduinoBearSSL.h>
 #include "config_test.h"
 #include "certificates.h"
+#include <PromLokiTransport.h>
 #include <Prometheus.h>
 
-Prometheus client;
+PromLokiTransport transport;
+PromClient client(transport);
 
 // Create a write request for 2 series.
 WriteRequest req(2);
@@ -42,19 +44,27 @@ void setup() {
 
     Serial.println("Starting");
 
+    // Configure and start the transport layer
+    transport.setUseTls(true);
+    transport.setCerts(TAs, TAs_NUM);
+    transport.setWifiSsid(WIFI_SSID);
+    transport.setWifiPass(WIFI_PASSWORD);
+    transport.setDebug(Serial);  // Remove this line to disable debug logging of the client.
+    if (!transport.begin()) {
+        Serial.println(transport.errmsg);
+        while (true) {};
+    }
+
     // Configure the client
     client.setUrl(GC_URL);
     client.setPath(GC_PATH);
     client.setPort(GC_PORT);
     client.setUser(GC_USER);
     client.setPass(GC_PASS);
-    client.setUseTls(true);
-    client.setCerts(TAs, TAs_NUM);
-    client.setWifiSsid(WIFI_SSID);
-    client.setWifiPass(WIFI_PASSWORD);
     client.setDebug(Serial);  // Remove this line to disable debug logging of the client.
-    if (!client.begin()){
+    if (!client.begin()) {
         Serial.println(client.errmsg);
+        while (true) {};
     }
 
     // Add our TimeSeries to the WriteRequest
@@ -68,7 +78,7 @@ void setup() {
 
 void loop() {
     int64_t time;
-    time = client.getTimeMillis();
+    time = transport.getTimeMillis();
     Serial.println(time);
 
     // Efficiency in requests can be gained by batching writes so we accumulate 5 samples before sending.

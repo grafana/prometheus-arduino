@@ -2,9 +2,8 @@
 #define writerequest_h
 
 #include "TimeSeries.h"
-#include "snappy/snappy.h"
-#include "proto/pb.h"
-#include "proto/pb_encode.h"
+#include <snappy.h>
+#include <pb.h>
 #include "proto/remote.pb.h"
 #include "PromDebug.h"
 
@@ -21,7 +20,7 @@ public:
 
     uint32_t getBufferSize();
 
-    const char* errmsg;
+    char* errmsg;
 
 private:
     uint32_t _seriesCount = 0;
