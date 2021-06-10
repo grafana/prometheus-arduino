@@ -22,12 +22,12 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: grafana/arduino-snappy-proto
-          path: /opt/arduino/arduino-snappy-proto
+          path: arduino-snappy-proto
       - name: Checkout PromLokiTransport
         uses: actions/checkout@v2
         with:
           repository: grafana/arduino-prom-loki-transport
-          path: /opt/arduino/arduino-prom-loki-transport
+          path: arduino-prom-loki-transport
           
       - name: Dump Config
         run: arduino-cli config dump --verbose
