@@ -1,9 +1,7 @@
-
-#include <ArduinoBearSSL.h>
 #include "config_test.h"
 #include "certificates.h"
 #include <PromLokiTransport.h>
-#include <Prometheus.h>
+#include <PrometheusArduino.h>
 
 PromLokiTransport transport;
 PromClient client(transport);
@@ -39,7 +37,7 @@ void setup() {
 
     // Configure and start the transport layer
     transport.setUseTls(true);
-    transport.setCerts(TAs, TAs_NUM);
+    transport.setCerts(grafanaCert, strlen(grafanaCert));
     transport.setWifiSsid(WIFI_SSID);
     transport.setWifiPass(WIFI_PASSWORD);
     transport.setDebug(Serial);  // Remove this line to disable debug logging of the client.

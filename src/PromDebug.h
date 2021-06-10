@@ -25,7 +25,7 @@
 
 #ifndef FREEMEM
 #define FREEMEM
-#if defined(ESP32)
+#if defined(ESP32) || defined(ESP8266)
 
 #include <Esp.h>
 inline int freeMemory() {

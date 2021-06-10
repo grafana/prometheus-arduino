@@ -12,6 +12,16 @@ This library provides the ability to push samples directly to any Prometheus Rem
 Sending remote write samples to Prometheus itself is a fairly new feature and is disabled by default, see [the Prometheus docs](https://prometheus.io/docs/prometheus/latest/disabled_features/#remote-write-receiver) for info on enabling.
 
 
+## Dependencies
+
+Not all of these libraries need to be installed for every board but it may just be easier to install them all.
+
+* **SnappyProto** For creating snappy compressed protobufs
+* **PromLokiTransport** Handles underlying connections for connecting to networks and sending data
+  * **ArduinoBearSSL** For SSL connections
+  * **ArduinoECCX08** For devices that have hardware support for SSL connections
+  * **MKRGSM** For MKRGSM1400 boards
+
 ## TimeSeries
 
 If you are familiar with Prometheus you are familiar with a Series, if not Prometheus defines a Series as 
@@ -25,7 +35,7 @@ A series (or TimeSeries in this library) is defined by a name and the set of lab
 Series are constructed with the follwing information:
 
 ```
-TimeSeries(batchSize, metricName, labelset, numberLabels)
+TimeSeries(batchSize, metricName, labelset)
 ```
 
 There is a section below on [batching](#batching) and the batchSize parameter.
@@ -33,16 +43,16 @@ There is a section below on [batching](#batching) and the batchSize parameter.
 Example with no labels:
 
 ```C
-TimeSeries ts1(5, "ambient_temp_celsius", {}, 0);
+TimeSeries ts1(5, "ambient_temp_celsius", "");
 ```
 
 Example with labels:
 
 ```C
-TimeSeries ts1(5, "ambient_temp_celsius", {{ "job", "esp32-test" }, {"host","esp32"}}, 2);
+TimeSeries ts1(5, "ambient_temp_celsius", "job=\"esp32-test\",host=\"esp32\"");
 ```
 
-**NOTE: Please be sure to update the last parameter to match the number of labels in your definition.**
+See the section below for more information on the label format.
 
 ## Metric Names
 
@@ -62,9 +72,12 @@ Labels are key=value pairs and more info can be found about them [in the Prometh
 Every new label value defines a new series (TimeSeries) and as such are defined separately in this library:
 
 ```C
-TimeSeries ts1(5, "ambient_temp_celsius", {{ "job", "esp32-test" }, {"host","esp32-lr"}, {"location","livingroom"}}, 3);
-TimeSeries ts2(5, "ambient_temp_celsius", {{ "job", "esp32-test" }, {"host","esp32-br"}, {"location","basement"}}, 3);
+TimeSeries ts1(5, "ambient_temp_celsius", "job=\"esp32-test\",host=\"esp32-lr\",location=\"livingroom\"");
+TimeSeries ts2(5, "ambient_temp_celsius", "job=\"esp32-test\",host=\"esp32-lr\",location=\"basement\"");
 ```
+
+The label format is `label_name1="value",label_name2="value"` however because we have to provide it as a string, we need to escape the quotation marks when providing it to the TimeSeries constructor `"label_name1=\"value\",label_name2=\"value\""`
+
 
 Labels can be used at query time to select some or all of your series
 
@@ -112,11 +125,11 @@ Start with the [Prometheus Docs](https://prometheus.io/docs/concepts/metric_type
 To implement a histogram you would need to define several series
 
 ```C
-TimeSeries h1b1(5, "http_request_duration_seconds_bucket", {{ "job", "esp32-test" }, {"le","1"}}, 2);
-TimeSeries h1b2(5, "http_request_duration_seconds_bucket", {{ "job", "esp32-test" }, {"le","5"}}, 2);
-TimeSeries h1b3(5, "http_request_duration_seconds_bucket", {{ "job", "esp32-test" }, {"le","+Inf"}}, 2);
-TimeSeries h1c(5, "http_request_duration_seconds_count", {{ "job", "esp32-test" }}, 1);
-TimeSeries h1s(5, "http_request_duration_seconds_sum", {{ "job", "esp32-test" }}, 1);
+TimeSeries h1b1(5, "http_request_duration_seconds_bucket", "job=\"esp32-test\",le=\"1\"");
+TimeSeries h1b2(5, "http_request_duration_seconds_bucket", "job=\"esp32-test\",le=\"5\"");
+TimeSeries h1b3(5, "http_request_duration_seconds_bucket", "job=\"esp32-test\",le=\"+Inf\"");
+TimeSeries h1c(5, "http_request_duration_seconds_count", "job=\"esp32-test\"");
+TimeSeries h1s(5, "http_request_duration_seconds_sum", "job=\"esp32-test\"");
 // Create counters to store the count value.
 uint32_t b1,b2,b3,c,s;
 ```
@@ -167,10 +180,7 @@ TIL Prometheus has a Summary type, will return to add an example.
 
 TLS/SSL configuration is difficult with Arduinos as the hardware is barely powerful enough (or not powerful enough at all in some cases) to do SSL negotiations, and there are several types of hardware and software libraries for doing SSL.
 
-For most devices the [SSLClient library](https://github.com/OPEnSLab-OSU/SSLClient) is used, which is based on BearSSL but seemed to be more resource efficient in testing.
-
-To use SSL you need to create a `certificates.h` file thankfully the wonderful SSLClient library provides some documentation and a number of ways to make this fairly easy: [check out the project docs](https://github.com/OPEnSLab-OSU/SSLClient/blob/master/TrustAnchors.md#generating-trust-anchors)
-
+The [PromLokiTransport](https://github.com/grafana/arduino-prom-loki-transport) library attempts to simplify this by providing the libraries and code for making SSL connections, check out that project for more information, or just look at the `prom_02_grafana_cloud.ino` example to see how to load a CA certificate and perform SSL connections.
 
 ## Batching
 
@@ -234,9 +244,8 @@ If you are working on a very memory constrained device, keep your metric names s
 
 ## License Notes
 
-This library ports 2 existing libraries internally as there were not Arduino versions of these libraries already:
+This libray is licensed under the Apache2 license however it uses several libraries which use different licenses:
 
-* [nanopb](https://github.com/nanopb/nanopb) which is licensed under the [zlib license](https://github.com/grafana/prometheus-arduino/blob/main/src/proto/LICENSE) and code is found in the `src/proto` directory.
-* [snappy-c](https://github.com/andikleen/snappy-c) which is licensed under an [custom license](https://github.com/grafana/prometheus-arduino/blob/main/src/snappy/LICENSE) and code is found in the `src/snappy` directory.
-
-Some small modifications were made to both sources to get them to compile and work on Arduino and are tagged with `// E.Welch` 
+* Arduino API and libraries are released under the LGPL, this [note describes requirements for LGPL code](https://support.arduino.cc/hc/en-us/articles/360018434279-I-have-used-Arduino-for-my-project-do-I-need-to-release-my-source-code-)
+* [SnappyProto](https://github.com/grafana/arduino-snappy-proto) ports two libraries both released under permissive, but custom licenses. See the project for more info.
+* [PromLokiTransport](https://github.com/grafana/arduino-prom-loki-transport) which is Apache2 but contains some MIT licensed files from [BearSSL](https://bearssl.org/)

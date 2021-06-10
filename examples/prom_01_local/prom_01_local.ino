@@ -1,6 +1,6 @@
 #include "config.h"
 #include <PromLokiTransport.h>
-#include <Prometheus.h>
+#include <PrometheusArduino.h>
 
 PromLokiTransport transport;
 PromClient client(transport);
