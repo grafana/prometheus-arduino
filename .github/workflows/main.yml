@@ -39,7 +39,7 @@ jobs:
           arduino-cli --additional-urls https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_dev_index.json core install esp32:esp32
       - name: Install Libraries
         run: |
-          arduino-cli lib install ArduinoBearSSL MKRGSM
+          arduino-cli lib install ArduinoBearSSL MKRGSM ArduinoHttpClient
       - name: Build MKRWIFI1010
         run: |  
           arduino-cli compile --libraries $GITHUB_WORKSPACE --fqbn arduino:samd:mkrwifi1010 $GITHUB_WORKSPACE/examples/prom_01_local/prom_01_local.ino
