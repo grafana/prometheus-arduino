@@ -20,7 +20,8 @@ Not all of these libraries need to be installed for every board but it may just 
 * **PromLokiTransport** Handles underlying connections for connecting to networks and sending data
   * **ArduinoBearSSL** For SSL connections
   * **ArduinoECCX08** For devices that have hardware support for SSL connections
-  * **MKRGSM** For MKRGSM1400 boards
+  * **MKRGSM** For MKRGSM1400 board
+  * **WiFiNINA** for MKRGSM1010 board
 * **ArduinoHttpClient**
 
 ## TimeSeries
