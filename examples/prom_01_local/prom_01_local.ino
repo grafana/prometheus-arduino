@@ -28,8 +28,16 @@ int loopCounter = 0;
 
 void setup() {
     Serial.begin(115200);
-    while (!Serial)
-        delay(10);
+
+    // Wait 5s for serial connection or continue without it
+    // some boards like the esp32 will run whether or not the 
+    // serial port is connected, others like the MKR boards will wait
+    // for ever if you don't break the loop.
+    uint8_t serialTimeout;
+    while (!Serial && serialTimeout < 50) {
+        delay(100);
+        serialTimeout++;
+    }
 
     Serial.println("Starting");
 
