@@ -43,14 +43,18 @@ jobs:
       - name: Build MKRWIFI1010 Example 1
         run: |  
           arduino-cli compile --library $GITHUB_WORKSPACE --library $GITHUB_WORKSPACE/arduino-snappy-proto --library $GITHUB_WORKSPACE/arduino-prom-loki-transport --fqbn arduino:samd:mkrwifi1010 $GITHUB_WORKSPACE/examples/prom_01_local/prom_01_local.ino
-      - name: Build MKRWIFI1010
+      - name: Build MKRWIFI1010 Example 2
         run: |  
-          arduino-cli compile --library $GITHUB_WORKSPACE --fqbn arduino:samd:mkrwifi1010 $GITHUB_WORKSPACE/examples/prom_02_grafana_cloud/prom_02_grafana_cloud.ino
-      - name: Build MKRGSM1400
+          arduino-cli compile --library $GITHUB_WORKSPACE --library $GITHUB_WORKSPACE/arduino-snappy-proto --library $GITHUB_WORKSPACE/arduino-prom-loki-transport --fqbn arduino:samd:mkrwifi1010 $GITHUB_WORKSPACE/examples/prom_02_grafana_cloud/prom_02_grafana_cloud.ino
+      - name: Build MKRGSM1400 Example 1
         run: |  
-          arduino-cli compile --library $GITHUB_WORKSPACE --fqbn arduino:samd:mkrgsm1400 $GITHUB_WORKSPACE/examples/prom_loki_transport_01/prom_loki_transport_01.ino
-          arduino-cli compile --library $GITHUB_WORKSPACE --fqbn arduino:samd:mkrgsm1400 $GITHUB_WORKSPACE/examples/prom_02_grafana_cloud/prom_02_grafana_cloud.ino
-      - name: Build ESP32 Pico
+          arduino-cli compile --library $GITHUB_WORKSPACE --library $GITHUB_WORKSPACE/arduino-snappy-proto --library $GITHUB_WORKSPACE/arduino-prom-loki-transport --fqbn arduino:samd:mkrgsm1400 $GITHUB_WORKSPACE/examples/prom_01_local/prom_01_local.ino
+      - name: Build MKRGSM1400 Example 2
+        run: |       
+          arduino-cli compile --library $GITHUB_WORKSPACE --library $GITHUB_WORKSPACE/arduino-snappy-proto --library $GITHUB_WORKSPACE/arduino-prom-loki-transport --fqbn arduino:samd:mkrgsm1400 $GITHUB_WORKSPACE/examples/prom_02_grafana_cloud/prom_02_grafana_cloud.ino
+      - name: Build ESP32 Pico Example 1
         run: |  
-          arduino-cli compile --library $GITHUB_WORKSPACE --fqbn esp32:esp32:pico32 $GITHUB_WORKSPACE/examples/prom_loki_transport_01/prom_loki_transport_01.ino
-          arduino-cli compile --library $GITHUB_WORKSPACE --fqbn esp32:esp32:pico32 $GITHUB_WORKSPACE/examples/prom_02_grafana_cloud/prom_02_grafana_cloud.ino
+          arduino-cli compile --library $GITHUB_WORKSPACE --library $GITHUB_WORKSPACE/arduino-snappy-proto --library $GITHUB_WORKSPACE/arduino-prom-loki-transport --fqbn esp32:esp32:pico32 $GITHUB_WORKSPACE/examples/prom_01_local/prom_01_local.ino
+      - name: Build ESP32 Pico Example 2
+        run: |      
+          arduino-cli compile --library $GITHUB_WORKSPACE --library $GITHUB_WORKSPACE/arduino-snappy-proto --library $GITHUB_WORKSPACE/arduino-prom-loki-transport --fqbn esp32:esp32:pico32 $GITHUB_WORKSPACE/examples/prom_02_grafana_cloud/prom_02_grafana_cloud.ino
