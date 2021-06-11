@@ -21,6 +21,7 @@ Not all of these libraries need to be installed for every board but it may just 
   * **ArduinoBearSSL** For SSL connections
   * **ArduinoECCX08** For devices that have hardware support for SSL connections
   * **MKRGSM** For MKRGSM1400 boards
+* **ArduinoHttpClient**
 
 ## TimeSeries
 
@@ -49,7 +50,7 @@ TimeSeries ts1(5, "ambient_temp_celsius", "");
 Example with labels:
 
 ```C
-TimeSeries ts1(5, "ambient_temp_celsius", "job=\"esp32-test\",host=\"esp32\"");
+TimeSeries ts1(5, "ambient_temp_celsius", "{job=\"esp32-test\",host=\"esp32\"}");
 ```
 
 See the section below for more information on the label format.
@@ -72,11 +73,11 @@ Labels are key=value pairs and more info can be found about them [in the Prometh
 Every new label value defines a new series (TimeSeries) and as such are defined separately in this library:
 
 ```C
-TimeSeries ts1(5, "ambient_temp_celsius", "job=\"esp32-test\",host=\"esp32-lr\",location=\"livingroom\"");
-TimeSeries ts2(5, "ambient_temp_celsius", "job=\"esp32-test\",host=\"esp32-lr\",location=\"basement\"");
+TimeSeries ts1(5, "ambient_temp_celsius", "{job=\"esp32-test\",host=\"esp32-lr\",location=\"livingroom\"}");
+TimeSeries ts2(5, "ambient_temp_celsius", "{job=\"esp32-test\",host=\"esp32-lr\",location=\"basement\"}");
 ```
 
-The label format is `label_name1="value",label_name2="value"` however because we have to provide it as a string, we need to escape the quotation marks when providing it to the TimeSeries constructor `"label_name1=\"value\",label_name2=\"value\""`
+The label format is `{label_name1="value",label_name2="value"}` however because we have to provide it as a string, we need to escape the quotation marks when providing it to the TimeSeries constructor `"{label_name1=\"value\",label_name2=\"value\"}"`
 
 
 Labels can be used at query time to select some or all of your series

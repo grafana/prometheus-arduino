@@ -2,8 +2,8 @@
 #define certificates_h
 
 /*
- * USERTrust RSA Certification Authority root CA used for 
- * grafana.com certificates.
+ * USERTrust RSA Certification Authority 
+ * root CA used for Grafana certificates.
  */
 
 static const char grafanaCert[] PROGMEM = R"EOF(

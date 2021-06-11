@@ -1,4 +1,4 @@
-#include "config_test.h"
+#include "config.h"
 #include "certificates.h"
 #include <PromLokiTransport.h>
 #include <PrometheusArduino.h>
@@ -16,10 +16,10 @@ WriteRequest req(2,1024);
 // See the README at https://github.com/grafana/prometheus-arduino for more info.
 
 // Define a TimeSeries which can hold up to 5 samples, has a name of `uptime_milliseconds`
-TimeSeries ts1(5, "uptime_milliseconds_total", "job=\"esp32-test\",host=\"esp32\"");
+TimeSeries ts1(5, "uptime_milliseconds_total", "{job=\"esp32-test\",host=\"esp32\"}");
 
 // Define a TimeSeries which can hold up to 5 samples, has a name of `heap_free_bytes`
-TimeSeries ts2(5, "heap_free_bytes", "job=\"esp32-test\",host=\"esp32\",foo=\"bar\"");
+TimeSeries ts2(5, "heap_free_bytes", "{job=\"esp32-test\",host=\"esp32\",foo=\"bar\"}");
 
 // Note, metrics with the same name and different labels are actually different series and you would need to define them separately
 //TimeSeries ts2(5, "heap_free_bytes", "job=\"esp32-test\",host=\"esp32\",foo=\"bar\"");
