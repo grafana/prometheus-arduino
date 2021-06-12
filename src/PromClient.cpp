@@ -33,24 +33,24 @@ void PromClient::setDebug(Stream& stream) {
 bool PromClient::begin() {
     errmsg = nullptr;
     if (!_url) {
-        errmsg = "you must set a url with setUrl()";
+        errmsg = (char*)"you must set a url with setUrl()";
         return false;
     }
     if (!_path) {
-        errmsg = "you must set a path with setPath()";
+        errmsg = (char*)"you must set a path with setPath()";
         return false;
     }
     if (!_port) {
-        errmsg = "you must set a port with setPort()";
+        errmsg = (char*)"you must set a port with setPort()";
         return false;
     }
 
     if (!_transport) {
-        errmsg = "you must set a transport with setTransport() first";
+        errmsg = (char*)"you must set a transport with setTransport() first";
         return false;
     }
     _client = _transport->getClient();
-    
+
     // Create the HttpClient
     _httpClient = new HttpClient(*_client, _url, _port);
     _httpClient->setTimeout(15000);
@@ -86,7 +86,7 @@ PromClient::SendResult PromClient::_send(uint8_t* entry, size_t len) {
                 DEBUG_PRINTLN(_client->getWriteError());
                 _client->clearWriteError();
             }
-            errmsg = "Failed to connect to server, enable debug logging for more info";
+            errmsg = (char*)"Failed to connect to server, enable debug logging for more info";
             return PromClient::SendResult::FAILED_RETRYABLE;
         }
         else {
@@ -127,11 +127,11 @@ PromClient::SendResult PromClient::_send(uint8_t* entry, size_t len) {
     }
     int statusCode = _httpClient->responseStatusCode();
     if (statusCode == HTTP_ERROR_TIMED_OUT) {
-        errmsg = "Timed out connecting to Loki";
+        errmsg = (char*)"Timed out connecting to Loki";
         return PromClient::SendResult::FAILED_RETRYABLE;
     }
     if (statusCode == HTTP_ERROR_INVALID_RESPONSE) {
-        errmsg = "Invalid response from server, correct address and port?";
+        errmsg = (char*)"Invalid response from server, correct address and port?";
         return PromClient::SendResult::FAILED_RETRYABLE;
     }
     int statusClass = statusCode / 100;
@@ -152,7 +152,7 @@ PromClient::SendResult PromClient::_send(uint8_t* entry, size_t len) {
             char c = _client->read();
             DEBUG_PRINT(c);
         }
-        errmsg = "Failed to send to prometheus, 4xx response";
+        errmsg = (char*)"Failed to send to prometheus, 4xx response";
         return PromClient::SendResult::FAILED_DONT_RETRY;
     }
     else {
@@ -162,7 +162,7 @@ PromClient::SendResult PromClient::_send(uint8_t* entry, size_t len) {
             char c = _client->read();
             DEBUG_PRINT(c);
         }
-        errmsg = "Failed to send to prometheus, 5xx or unexpected status code";
+        errmsg = (char*)"Failed to send to prometheus, 5xx or unexpected status code";
         return PromClient::SendResult::FAILED_RETRYABLE;
     }
     return PromClient::SendResult::SUCCESS;

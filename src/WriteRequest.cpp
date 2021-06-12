@@ -16,7 +16,7 @@ void WriteRequest::setDebug(Stream& stream) {
 bool WriteRequest::addTimeSeries(TimeSeries& series) {
     errmsg = nullptr;
     if (_seriesPointer >= _seriesCount) {
-        errmsg = "cannot add series, max number of series have already been added.";
+        errmsg = (char*)"cannot add series, max number of series have already been added.";
         return false;
     }
 
@@ -47,7 +47,7 @@ int16_t WriteRequest::toSnappyProto(uint8_t* output) {
     if (!pb_encode(&os, prometheus_WriteRequest_fields, &rw)) {
         DEBUG_PRINT("Error from proto encode: ");
         DEBUG_PRINTLN(PB_GET_ERROR(&os));
-        errmsg = "Error creating protobuf, enable debug logging to see more details";
+        errmsg = (char*)"Error creating protobuf, enable debug logging to see more details";
         return -1;
     }
 
@@ -77,7 +77,7 @@ int16_t WriteRequest::toSnappyProto(uint8_t* output) {
     DEBUG_PRINTLN(len);
 
     if (len > _bufferSize) {
-        errmsg = "WriteRequest bufferSize is too small and will be overun during compression! Enable debug logging to see required buffer size";
+        errmsg = (char*)"WriteRequest bufferSize is too small and will be overun during compression! Enable debug logging to see required buffer size";
         return -1;
     }
 
