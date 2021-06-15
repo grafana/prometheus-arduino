@@ -109,6 +109,7 @@ bool WriteRequest::callback_encode_timeseries(pb_ostream_t* ostream, const pb_fi
             return false;
         }
     }
+    return true;
 }
 
 bool WriteRequest::callback_encode_labels(pb_ostream_t* ostream, const pb_field_t* field, void* const* arg) {
@@ -127,6 +128,7 @@ bool WriteRequest::callback_encode_labels(pb_ostream_t* ostream, const pb_field_
             return false;
         }
     }
+    return true;
 }
 
 bool WriteRequest::callback_encode_string(pb_ostream_t* ostream, const pb_field_t* field, void* const* arg) {
@@ -154,5 +156,5 @@ bool WriteRequest::callback_encode_samples(pb_ostream_t* ostream, const pb_field
             return false;
         }
     }
-
+    return true;
 }
