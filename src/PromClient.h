@@ -29,6 +29,7 @@ public:
     void setDebug(Stream& stream);
 
     void setTransport(PromLokiTransport& transport);
+    uint16_t getConnectCount();
 
     bool begin();
     SendResult send(WriteRequest& req);
@@ -46,6 +47,7 @@ protected:
     uint16_t _port;
     const char* _user;
     const char* _pass;
+    uint16_t _connectCount = 0;
 
     SendResult _send(uint8_t* entry, size_t len);
 };
