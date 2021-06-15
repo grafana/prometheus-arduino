@@ -1,6 +1,6 @@
 #include "TimeSeries.h"
 
-TimeSeries::TimeSeries(uint16_t batchSize, const char* name, char* labels) : _batchSize(batchSize) {
+TimeSeries::TimeSeries(uint16_t batchSize, const char* name, const char* labels) : _batchSize(batchSize) {
     _batch = new TimeSeries::Sample * [batchSize];
 
     //Pre-allocate the memory for each Sample
