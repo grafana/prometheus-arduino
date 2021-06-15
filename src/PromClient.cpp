@@ -1,9 +1,9 @@
 #include "PromClient.h"
 
 PromClient::PromClient() {};
-PromClient::PromClient(PromLokiTransport& transport) : _transport(&transport){};
+PromClient::PromClient(PromLokiTransport& transport) : _transport(&transport) {};
 PromClient::~PromClient() {
-    if (_httpClient){
+    if (_httpClient) {
         delete _httpClient;
     }
 };
@@ -28,6 +28,14 @@ void PromClient::setPass(const char* pass) {
 void PromClient::setDebug(Stream& stream) {
     _debug = &stream;
 };
+
+void PromClient::setTransport(PromLokiTransport& transport) {
+    _transport = &transport;
+}
+
+uint16_t PromClient::getConnectCount() {
+    return _connectCount;
+}
 
 
 bool PromClient::begin() {
@@ -91,6 +99,7 @@ PromClient::SendResult PromClient::_send(uint8_t* entry, size_t len) {
         }
         else {
             DEBUG_PRINTLN("Connected.")
+            _connectCount++;
         }
     }
 
