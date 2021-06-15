@@ -30,7 +30,7 @@ TimeSeries::TimeSeries(uint16_t batchSize, const char* name, const char* labels)
     strcpy(nameLabel, name);
 
     // Set the metric name
-    TimeSeries::Label* l = new TimeSeries::Label("__name__", nameLabel);
+    TimeSeries::Label* l = new TimeSeries::Label((char*)"__name__", nameLabel);
     _labels[labelIdx] = l;
     labelIdx++;
 
@@ -111,7 +111,7 @@ TimeSeries::~TimeSeries() {
 bool TimeSeries::addSample(int64_t tsMillis, double val) {
     errmsg = nullptr;
     if (_batchPointer >= _batchSize) {
-        errmsg = "batch full";
+        errmsg = (char*)"batch full";
         return false;
     }
 
