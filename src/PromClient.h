@@ -6,7 +6,7 @@
 #include <ArduinoHttpClient.h>
 #include "PromDebug.h"
 
-static const char PromUserAgent[] PROGMEM = "prom-arduino/0.1.0";
+static const char PromUserAgent[] PROGMEM = "prom-arduino/0.2.2";
 
 class PromClient {
 public:
