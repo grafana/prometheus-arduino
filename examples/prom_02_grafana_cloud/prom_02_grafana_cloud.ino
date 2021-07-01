@@ -87,7 +87,6 @@ void loop() {
     time = transport.getTimeMillis();
     Serial.println(time);
 
-
     // Efficiency in requests can be gained by batching writes so we accumulate a few samples before sending.
     // This is not necessary however, especially if your writes are infrequent. It's still recommended to build batches when you can.
 
