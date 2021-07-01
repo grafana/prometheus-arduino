@@ -21,6 +21,10 @@ TimeSeries ts1(5, "uptime_milliseconds_total", "{job=\"esp32-test\",host=\"esp32
 // Define a TimeSeries which can hold up to 5 samples, has a name of `heap_free_bytes`
 TimeSeries ts2(5, "heap_free_bytes", "{job=\"esp32-test\",host=\"esp32\",foo=\"bar\"}");
 
+// !!!!!
+// IF YOU WANT TO INCREASE THE TOTAL AMOUNT OF TIME SERIES, ALSO INCREASE WriteRequest()
+// !!!!!
+
 // Note, metrics with the same name and different labels are actually different series and you would need to define them separately
 //TimeSeries ts2(5, "heap_free_bytes", "job=\"esp32-test\",host=\"esp32\",foo=\"bar\"");
 
@@ -83,10 +87,21 @@ void loop() {
     time = transport.getTimeMillis();
     Serial.println(time);
 
-    // Efficiency in requests can be gained by batching writes so we accumulate 5 samples before sending.
-    // This is not necessary however, especially if your writes are infrequent, but it's recommended to build batches when you can.
-    if (loopCounter >= 5) {
-        //Send
+
+    // Efficiency in requests can be gained by batching writes so we accumulate a few samples before sending.
+    // This is not necessary however, especially if your writes are infrequent. It's still recommended to build batches when you can.
+
+
+    if (!ts1.addSample(time, millis())) {
+        Serial.println(ts1.errmsg);
+    }
+    if (!ts2.addSample(time, freeMemory())) {
+        Serial.println(ts2.errmsg);
+    }
+    loopCounter++;
+
+    if (loopCounter >= 4) {
+        // Send data
         loopCounter = 0;
         PromClient::SendResult res = client.send(req);
         if (!res == PromClient::SendResult::SUCCESS) {
@@ -101,16 +116,12 @@ void loop() {
         ts1.resetSamples();
         ts2.resetSamples();
     }
-    else {
-        if (!ts1.addSample(time, millis())) {
-            Serial.println(ts1.errmsg);
-        }
-        if (!ts2.addSample(time, freeMemory())) {
-            Serial.println(ts2.errmsg);
-        }
-        loopCounter++;
-    }
 
-    delay(500);
+    // Grafana Cloud Metrics accepts one sample every 15 seconds max.
+    // Collecting more often is not useful and can lead to artifacts in the backend.
+    // Sending could be parallelized or timed to ensure it's a 15 seconds cadence, not 15 second
+    // addition to however long collection & sending took.
+    delay(15000);
+
 
 };
