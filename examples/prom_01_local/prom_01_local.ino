@@ -109,10 +109,9 @@ void loop() {
         ts2.resetSamples();
     }
 
-    // Prometheus BCP is to not go under 15 second intervals by default.
-    // Collecting more often is not useful and can lead to artifacts in the backend.
-    // Sending could be parallelized or timed to ensure it's a 15 seconds cadence, not 15 second
-    // addition to however long collection & sending took.
+    // Prometheus default is 15 second intervals but you can send several times per second if you want to.
+    // Collection and Sending could be parallelized or timed to ensure we're on a 15 seconds cadence,
+    // not simply add 15 second to however long collection & sending took.
     delay(15000);
 
 

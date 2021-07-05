@@ -116,10 +116,12 @@ void loop() {
         ts2.resetSamples();
     }
 
-    // Grafana Cloud Metrics accepts one sample every 15 seconds max.
-    // Collecting more often is not useful and can lead to artifacts in the backend.
-    // Sending could be parallelized or timed to ensure it's a 15 seconds cadence, not 15 second
-    // addition to however long collection & sending took.
+    // Grafana Cloud defaults to ingesting and showing one sample every 15 seconds.
+    // If you select a higher frequency here and work with Grafana Cloud, you will need
+    // to change the datasource's scrape interval as well. 500ms intervals are known to work and you can
+    // try go higher if you need to.
+    // Collection and Sending could be parallelized or timed to ensure we're on a 15 seconds cadence,
+    // not simply add 15 second to however long collection & sending took.
     delay(15000);
 
 
