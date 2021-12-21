@@ -117,7 +117,7 @@ PromClient::SendResult PromClient::_send(uint8_t* entry, size_t len) {
         _httpClient->sendBasicAuth(_user, _pass);
     }
     _client->print("User-Agent: ");
-    _client->println(PromUserAgent);
+    _client->println("prom-arduino/0.2.2");
     _client->print("Content-Length: ");
     _client->println(len);
     _httpClient->beginBody();
