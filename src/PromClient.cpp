@@ -94,7 +94,7 @@ PromClient::SendResult PromClient::_send(uint8_t* entry, size_t len) {
                 DEBUG_PRINTLN(_client->getWriteError());
                 _client->clearWriteError();
             }
-            errmsg = (char*)"Failed to connect to server, enable debug logging for more info";
+            errmsg = (char*)"Failed to connect to remote Prometheus endpoint, enable debug logging for more info";
             return PromClient::SendResult::FAILED_RETRYABLE;
         }
         else {
@@ -140,7 +140,7 @@ PromClient::SendResult PromClient::_send(uint8_t* entry, size_t len) {
         return PromClient::SendResult::FAILED_RETRYABLE;
     }
     if (statusCode == HTTP_ERROR_INVALID_RESPONSE) {
-        errmsg = (char*)"Invalid response from server, correct address and port?";
+        errmsg = (char*)"Invalid response from remote Prometheus endpoint, correct address and port?";
         return PromClient::SendResult::FAILED_RETRYABLE;
     }
     int statusClass = statusCode / 100;
