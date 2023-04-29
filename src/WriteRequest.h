@@ -18,6 +18,8 @@ public:
     
     int16_t toSnappyProto(uint8_t* output);
 
+    void fromSnappyProto(uint8_t* input, size_t len);
+
     uint32_t getBufferSize();
 
     char* errmsg;
@@ -34,6 +36,11 @@ private:
     static bool callback_encode_labels(pb_ostream_t* ostream, const pb_field_t* field, void* const* arg);
     static bool callback_encode_samples(pb_ostream_t* ostream, const pb_field_t* field, void* const* arg);
     static bool callback_encode_string(pb_ostream_t* ostream, const pb_field_t* field, void* const* arg);
+
+    static bool callback_decode_timeseries(pb_istream_t* istream, const pb_field_t* field, void** arg);
+    static bool callback_decode_labels(pb_istream_t* istream, const pb_field_t* field, void** arg);
+    static bool callback_decode_samples(pb_istream_t* istream, const pb_field_t* field, void** arg);
+    static bool callback_decode_string(pb_istream_t* istream, const pb_field_t* field, void** arg);
 
 };
 
