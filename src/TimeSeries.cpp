@@ -1,6 +1,6 @@
 #include "TimeSeries.h"
 
-TimeSeries::TimeSeries(uint16_t batchSize, const char* name, const char* labels) : _batchSize(batchSize) {
+TimeSeries::TimeSeries(uint16_t batchSize, const char* name, const char* labels): _batchSize(batchSize) {
     _batch = new TimeSeries::Sample * [batchSize];
 
     //Pre-allocate the memory for each Sample
@@ -101,11 +101,23 @@ TimeSeries::TimeSeries(uint16_t batchSize, const char* name, const char* labels)
 
 }
 
+TimeSeries::TimeSeries(uint16_t batchSize, uint16_t maxNameLen, uint16_t maxlLabelKeyLen, uint16_t maxLabelValLen, uint8_t numLabels): _batchSize(batchSize) {
+    _name = (char*)malloc(sizeof(char) * (maxNameLen + 1));
+    _labels = new TimeSeries::Label * [_numLabels];
+    for (int i = 0; i < numLabels; i++) {
+        TimeSeries::Label* l = new TimeSeries::Label(maxlLabelKeyLen, maxLabelValLen);
+        _labels[i] = l;
+    }
+    _numLabels = numLabels;
+}
+
 TimeSeries::~TimeSeries() {
     for (int i = 0; i < _batchSize; i++) {
         delete _batch[i];
     }
     delete[] _batch;
+    free(_name);
+    // TODO clean up labels
 }
 
 bool TimeSeries::addSample(int64_t tsMillis, double val) {
@@ -126,6 +138,38 @@ void TimeSeries::resetSamples() {
     _batchPointer = 0;
 }
 
+bool TimeSeries::setLabel(uint8_t pos, char* key, uint16_t keyLen, char* val, uint16_t valLen) {
+    if (pos > _numLabels) {
+        errmsg = (char*)"label position out of range";
+        return false;
+    }
+    if (keyLen > _labels[pos]->_maxKeyLen) {
+        errmsg = (char*)"key too long";
+        return false;
+    }
+    if (valLen > _labels[pos]->_maxValLen) {
+        errmsg = (char*)"value too long";
+        return false;
+    }
+    strncpy(_labels[pos]->key, key, keyLen);
+    strncpy(_labels[pos]->val, val, valLen);
+
+    return true;
+}
+
+bool TimeSeries::setName(const char* name, uint16_t nameLen) {
+    if (strlen(name) > _maxNameLen) {
+        errmsg = (char*)"name too long";
+        return false;
+    }
+    strncpy(_name, name, nameLen);
+    return true;
+}
+
+TimeSeries::Label* TimeSeries::getLabel(uint8_t pos) {
+    return _labels[pos];
+}
+
 TimeSeries::Sample::Sample() {
 
 }
@@ -142,6 +186,14 @@ TimeSeries::Label::Label(char* k, char* v) {
     size_t lenv = strlen(v);
     val = (char*)malloc(sizeof(char) * (lenv + 1));
     strcpy(val, v);
+}
+
+TimeSeries::Label::Label(uint32_t maxKeyLen, uint32_t maxValLen) {
+    // Make sure to leave room for the null terminator
+    key = (char*)malloc(sizeof(char) * (maxKeyLen + 1));
+    val = (char*)malloc(sizeof(char) * (maxValLen + 1));
+    _maxKeyLen = maxKeyLen;
+    _maxValLen = maxValLen;
 }
 
 TimeSeries::Label::~Label() {

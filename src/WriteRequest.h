@@ -18,7 +18,7 @@ public:
     
     int16_t toSnappyProto(uint8_t* output);
 
-    void fromSnappyProto(uint8_t* input, size_t len);
+    int16_t fromSnappyProto(uint8_t* input, size_t len);
 
     uint32_t getBufferSize();
 
@@ -27,6 +27,8 @@ public:
 private:
     uint32_t _seriesCount = 0;
     uint32_t _bufferSize = 0;
+    uint8_t* _buffer = nullptr;
+    uint32_t _bufferPos = 0;
     Stream* _debug = nullptr;
 
     TimeSeries** _series = nullptr;
@@ -40,7 +42,8 @@ private:
     static bool callback_decode_timeseries(pb_istream_t* istream, const pb_field_t* field, void** arg);
     static bool callback_decode_labels(pb_istream_t* istream, const pb_field_t* field, void** arg);
     static bool callback_decode_samples(pb_istream_t* istream, const pb_field_t* field, void** arg);
-    static bool callback_decode_string(pb_istream_t* istream, const pb_field_t* field, void** arg);
+    static bool callback_decode_label_key(pb_istream_t* istream, const pb_field_t* field, void** arg);
+    static bool callback_decode_label_val(pb_istream_t* istream, const pb_field_t* field, void** arg);
 
 };
 

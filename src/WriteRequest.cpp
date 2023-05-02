@@ -2,11 +2,13 @@
 
 WriteRequest::WriteRequest(uint32_t numSeries, uint32_t bufferSize)
     : _seriesCount(numSeries), _bufferSize(bufferSize) {
-    _series = new TimeSeries * [numSeries];
+    _series = new TimeSeries*[numSeries];
+    _buffer = new uint8_t[bufferSize];
 }
 
 WriteRequest::~WriteRequest() {
     delete[] _series;
+    delete[] _buffer;
 }
 
 void WriteRequest::setDebug(Stream& stream) {
@@ -36,7 +38,7 @@ int16_t WriteRequest::toSnappyProto(uint8_t* output) {
     uint8_t buffer[_bufferSize];
     pb_ostream_t os = pb_ostream_from_buffer(buffer, sizeof(buffer));
 
-    SeriesTuple st = SeriesTuple{ series: _series, seriesCnt : _seriesPointer };
+    SeriesTuple st = SeriesTuple{series : _series, seriesCnt : _seriesPointer};
 
     prometheus_WriteRequest rw = {};
     rw.timeseries.arg = &st;
@@ -90,23 +92,37 @@ int16_t WriteRequest::toSnappyProto(uint8_t* output) {
     return len;
 }
 
-void WriteRequest::fromSnappyProto(uint8_t* input, size_t len) {
+int16_t WriteRequest::fromSnappyProto(uint8_t* input, size_t len) {
+    DEBUG_PRINT("Begin deserialization: ");
+    PRINT_HEAP();
     size_t uncompressedLen;
     bool cl = snappy_uncompressed_length((char*)input, len, &uncompressedLen);
     if (!cl) {
-        DEBUG_PRINTLN("Call to snappy_uncompressed_length failed");
+        errmsg = (char*)"Call to snappy_uncompressed_length failed";
+        return -1;
     }
     DEBUG_PRINT("Required buffer size for decompression: ");
     DEBUG_PRINTLN(uncompressedLen);
 
-    char uncompressed[uncompressedLen];
-    int8_t res = snappy_uncompress((char*)input, len, uncompressed);
+    if (uncompressedLen > _bufferSize) {
+        errmsg = (char*)"WriteRequest bufferSize is too small and will be overun during decompression! Enable debug logging to see required buffer size";
+        return -1;
+    }
+
+    int8_t res = snappy_uncompress((char*)input, len, (char*)_buffer);
     DEBUG_PRINT("Decompression result: ");
     DEBUG_PRINTLN(res);
+    if (res != 0) {
+        errmsg = (char*)"Decompression failed, enable debug logging to see exit status and more info.";
+        return -1;
+    }
 
-    SeriesTuple st = SeriesTuple{ series: _series, seriesCnt : _seriesPointer };
+    SeriesTuple st = SeriesTuple{
+        series : _series,
+        seriesCnt : _seriesPointer,
+    };
 
-    pb_istream_t is = pb_istream_from_buffer((uint8_t*)uncompressed, uncompressedLen);
+    pb_istream_t is = pb_istream_from_buffer(_buffer, uncompressedLen);
     prometheus_WriteRequest message = prometheus_WriteRequest_init_zero;
     message.timeseries.arg = &st;
     message.timeseries.funcs.decode = &callback_decode_timeseries;
@@ -114,20 +130,24 @@ void WriteRequest::fromSnappyProto(uint8_t* input, size_t len) {
     if (!status) {
         DEBUG_PRINT("Error from proto encode: ");
         DEBUG_PRINTLN(PB_GET_ERROR(&is));
-        return;
+        return -1;
     }
+
+    DEBUG_PRINT("End deserialization: ");
+    PRINT_HEAP();
+    return 0;
 }
 
 bool WriteRequest::callback_decode_timeseries(pb_istream_t* istream,
-    const pb_field_t* field,
-    void** arg) {
+                                              const pb_field_t* field,
+                                              void** arg) {
     SeriesTuple* st = (SeriesTuple*)*arg;
 
     uint8_t i = 0;
-    while (istream->bytes_left)
-    {
+    while (istream->bytes_left) {
         Serial.println("Decoding timeseries");
         TimeSeries* series = st->series[i];
+        series->_labelsPointer = 0;
         prometheus_TimeSeries ts = {};
         ts.labels.arg = series;
         ts.labels.funcs.decode = &callback_decode_labels;
@@ -137,7 +157,8 @@ bool WriteRequest::callback_decode_timeseries(pb_istream_t* istream,
             return false;
         }
         i++;
-        // We decode everything, but if there are more timeseries than we have allocated, we overrwite the last one
+        // We decode everything, but if there are more timeseries than we have
+        // allocated, we overrwite the last one
         if (i >= st->seriesCnt) {
             i = st->seriesCnt - 1;
         }
@@ -145,28 +166,32 @@ bool WriteRequest::callback_decode_timeseries(pb_istream_t* istream,
     return true;
 }
 
-bool WriteRequest::callback_decode_labels(pb_istream_t* istream, const pb_field_t* field, void** arg) {
-    // TimeSeries* series = (TimeSeries*)*arg;
-    Serial.println("Decoding labels");
-    // // Decode all the labels
-    // while (istream->bytes_left) {
-    //     prometheus_Label labels = {};
-    //     labels.name.arg = series->_labels[i]->key;
-    //     labels.name.funcs.encode = &callback_encode_string;
-    //     labels.value.arg = series->_labels[i]->val;
-    //     labels.value.funcs.encode = &callback_encode_string;
-    //     if (!pb_decode(istream, prometheus_Label_fields, &labels)) {
-    //         return false;
-    //     }
-    // }
-
-    // Assign the decoded labels to the series
-
+bool WriteRequest::callback_decode_labels(pb_istream_t* istream,
+                                          const pb_field_t* field,
+                                          void** arg) {
+    TimeSeries* ts = (TimeSeries*)*arg;
+    // Decode all the labels
+    while (istream->bytes_left) {
+        if (ts->_labelsPointer > ts->_numLabels) {
+            ts->errmsg = (char*)"More labels being decoded than allocated for timeseries";
+            return false;
+        }
+        prometheus_Label labels = {};
+        labels.name.arg = ts;
+        labels.name.funcs.decode = &callback_decode_label_key;
+        labels.value.arg = ts;
+        labels.value.funcs.decode = &callback_decode_label_val;
+        if (!pb_decode(istream, prometheus_Label_fields, &labels)) {
+            return false;
+        }
+        ts->_labelsPointer++;
+    }
 
     return true;
-
 }
-bool WriteRequest::callback_decode_samples(pb_istream_t* istream, const pb_field_t* field, void** arg) {
+bool WriteRequest::callback_decode_samples(pb_istream_t* istream,
+                                           const pb_field_t* field,
+                                           void** arg) {
     TimeSeries* series = (TimeSeries*)*arg;
     while (istream->bytes_left) {
         Serial.println("Decoding samples");
@@ -183,14 +208,54 @@ bool WriteRequest::callback_decode_samples(pb_istream_t* istream, const pb_field
     return true;
 }
 
-bool WriteRequest::callback_decode_string(pb_istream_t* istream, const pb_field_t* field, void** arg)
-{
-    return false;
+bool WriteRequest::callback_decode_label_key(pb_istream_t* istream,
+                                          const pb_field_t* field,
+                                          void** arg) {
+    TimeSeries* ts = (TimeSeries*)*arg;
+    TimeSeries::Label* l = ts->_labels[ts->_labelsPointer];
+
+    size_t bytesLeft = istream->bytes_left;
+
+    if (l->_maxKeyLen < istream->bytes_left) {
+        ts->errmsg = (char*)"Label key is longer than allocated buffer";
+        return false;
+    }
+
+    if (!pb_read(istream, (unsigned char*)l->key, istream->bytes_left))
+        return false;
+
+    // We allocated enough space for the max length plus 1 for a terminator, probably.
+    l->key[bytesLeft] = '\0';
+
+    return true;
+}
+
+bool WriteRequest::callback_decode_label_val(pb_istream_t* istream,
+                                          const pb_field_t* field,
+                                          void** arg) {
+    TimeSeries* ts = (TimeSeries*)*arg;
+    TimeSeries::Label* l = ts->_labels[ts->_labelsPointer];
+
+    size_t bytesLeft = istream->bytes_left;
+
+    if (l->_maxValLen < istream->bytes_left) {
+        Serial.println("label val is longer than allocated buffer");
+        ts->errmsg = (char*)"Label val is longer than allocated buffer";
+        return false;
+    }
+
+    if (!pb_read(istream, (unsigned char*)l->val, istream->bytes_left))
+        return false;
+
+    // We allocated enough space for the max length plus 1 for a terminator
+    l->val[bytesLeft] = '\0';
+
+    return true;
 }
 
 bool WriteRequest::callback_encode_timeseries(pb_ostream_t* ostream,
-    const pb_field_t* field,
-    void* const* arg) {
+                                              const pb_field_t* field,
+                                              void* const* arg) {
     SeriesTuple* st = (SeriesTuple*)*arg;
     for (int i = 0; i < st->seriesCnt; i++) {
         if (!pb_encode_tag_for_field(ostream, field)) {
@@ -210,8 +275,8 @@ bool WriteRequest::callback_encode_timeseries(pb_ostream_t* ostream,
 }
 
 bool WriteRequest::callback_encode_labels(pb_ostream_t* ostream,
-    const pb_field_t* field,
-    void* const* arg) {
+                                          const pb_field_t* field,
+                                          void* const* arg) {
     TimeSeries* series = (TimeSeries*)*arg;
 
     for (int i = 0; i < series->_numLabels; i++) {
@@ -231,8 +296,8 @@ bool WriteRequest::callback_encode_labels(pb_ostream_t* ostream,
 }
 
 bool WriteRequest::callback_encode_string(pb_ostream_t* ostream,
-    const pb_field_t* field,
-    void* const* arg) {
+                                          const pb_field_t* field,
+                                          void* const* arg) {
     char* s = (char*)*arg;
 
     if (!pb_encode_tag_for_field(ostream, field)) {
@@ -245,8 +310,8 @@ bool WriteRequest::callback_encode_string(pb_ostream_t* ostream,
 }
 
 bool WriteRequest::callback_encode_samples(pb_ostream_t* ostream,
-    const pb_field_t* field,
-    void* const* arg) {
+                                           const pb_field_t* field,
+                                           void* const* arg) {
     TimeSeries* series = (TimeSeries*)*arg;
     for (int i = 0; i < series->_batchPointer; i++) {
         if (!pb_encode_tag_for_field(ostream, field)) {
@@ -261,4 +326,3 @@ bool WriteRequest::callback_encode_samples(pb_ostream_t* ostream,
     }
     return true;
 }
-
