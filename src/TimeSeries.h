@@ -29,6 +29,7 @@ public:
 
 private:
     friend class WriteRequest;
+    friend class ReadRequest;
     
     char* _name;
     uint16_t _maxNameLen = 0;
