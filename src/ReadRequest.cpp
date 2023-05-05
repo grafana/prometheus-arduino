@@ -44,7 +44,3 @@ int16_t ReadRequest::fromHttpStream(Stream* stream) {
     PRINT_HEAP();
     return 0;
 }
-
-void ReadRequest::urlEncode(char* str, uint16_t len, char* output){
-
-}

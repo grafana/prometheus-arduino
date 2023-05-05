@@ -34,8 +34,10 @@ public:
 
     bool begin();
     SendResult send(WriteRequest& req);
-    SendResult instantQuery(ReadRequest& req);
-    SendResult rangeQuery(ReadRequest& req);
+    SendResult instantQuery(ReadRequest& req, char* query, uint16_t queryLen, uint16_t time = 0);
+    SendResult rangeQuery(ReadRequest& req, char* query, uint16_t queryLen, uint16_t start, uint16_t end);
+
+    void urlEncode(char* str, uint16_t len, char* output);
 
     char* errmsg;
 
@@ -55,7 +57,7 @@ protected:
     uint16_t _connectCount = 0;
 
     SendResult _send(uint8_t* entry, size_t len);
-    SendResult _query(char* path, ReadRequest& req);
+    SendResult _query(char* path, ReadRequest& req, char* query, uint16_t queryLen, uint16_t time, uint16_t start, uint16_t end);
 };
 
 

@@ -178,17 +178,21 @@ PromClient::SendResult PromClient::_send(uint8_t* entry, size_t len) {
     return PromClient::SendResult::SUCCESS;
 };
 
-PromClient::SendResult PromClient::instantQuery(ReadRequest& req) {
+PromClient::SendResult PromClient::instantQuery(ReadRequest& req, char* query, uint16_t queryLen, uint16_t time) {
     errmsg = nullptr;
-    return _query("/api/v1/query", req);
+    return _query("/api/v1/query", req, query, queryLen, time, 0, 0);
 };
 
-PromClient::SendResult PromClient::rangeQuery(ReadRequest& req) {
+PromClient::SendResult PromClient::rangeQuery(ReadRequest& req, char* query, uint16_t queryLen, uint16_t start, uint16_t end) {
     errmsg = nullptr;
-    return _query("/api/v1/query_range", req);
+    return _query("/api/v1/query_range", req, query, queryLen, 0, start, end);
+}
+
+void PromClient::urlEncode(char* str, uint16_t len, char* output){
+
 };
 
-PromClient::SendResult PromClient::_query(char* path, ReadRequest& req) {
+PromClient::SendResult PromClient::_query(char* path, ReadRequest& req, char* query, uint16_t queryLen, uint16_t time, uint16_t start, uint16_t end) {
     DEBUG_PRINTLN("Querying Prometheus");
 
     // Make a HTTP request:
@@ -218,6 +222,20 @@ PromClient::SendResult PromClient::_query(char* path, ReadRequest& req) {
     _httpClient->beginRequest();
     _client->print("GET ");
     _client->print(path);
+    _client->print("?query=");
+    _client->write((uint8_t*)query, queryLen);
+    if (time != 0) {
+        _client->print("&time=");
+        _client->print(time);
+    }
+    if (start != 0) {
+        _client->print("&start=");
+        _client->print(start);
+    }
+    if (end != 0) {
+        _client->print("&end=");
+        _client->print(end);
+    }
     _client->println(" HTTP/1.1");
     _client->print("Host: ");
     _client->println(_url);
@@ -253,15 +271,8 @@ PromClient::SendResult PromClient::_query(char* path, ReadRequest& req) {
     }
     int statusClass = statusCode / 100;
     if (statusClass == 2) {
-        DEBUG_PRINTLN("Prom Send Succeeded");
-        // We don't use the _httpClient->responseBody() method both because it allocates a string
-        // and also because it doesn't understand a 204 response code not having a content-length
-        // header and will wait until a timeout for additional bytes.
-        while (_client->available()) {
-            
-            char c = _client->read();
-            DEBUG_PRINT(c);
-        }
+        DEBUG_PRINTLN("Prom Send Succeeded, reading response.");
+        req.fromHttpStream(_client);
     }
     else if (statusClass == 4) {
         DEBUG_PRINT("Prom Send Failed with code: ");

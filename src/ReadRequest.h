@@ -31,8 +31,6 @@ private:
     TimeSeries** _series = nullptr;
     uint8_t _seriesPointer = 0;
 
-    void urlEncode(char* str, uint16_t len, char* output);
-
 };
 
 #endif
