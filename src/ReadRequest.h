@@ -16,7 +16,7 @@ public:
 
     uint32_t getBufferSize();
 
-    int16_t fromHttpBody(uint8_t* input, size_t len);
+    int16_t fromHttpStream(Stream* stream);
 
     char* errmsg;
 

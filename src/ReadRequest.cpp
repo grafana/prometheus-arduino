@@ -1,4 +1,4 @@
-#include "ReadReqeust.h"
+#include "ReadRequest.h"
 
 ReadRequest::ReadRequest(uint32_t numSeries, uint32_t bufferSize)
     : _seriesCount(numSeries), _bufferSize(bufferSize) {
@@ -10,7 +10,7 @@ ReadRequest::ReadRequest(uint32_t numSeries, uint32_t bufferSize)
 ReadRequest::~ReadRequest() {
     delete[] _series;
     delete[] _buffer;
-    delete[] _json;
+    delete _json;
 }
 
 void ReadRequest::setDebug(Stream& stream) {
@@ -33,11 +33,11 @@ uint32_t ReadRequest::getBufferSize() {
     return _bufferSize;
 }
 
-int16_t ReadRequest::fromHttpBody(uint8_t* input, size_t len) {
+int16_t ReadRequest::fromHttpStream(Stream* stream) {
     DEBUG_PRINT("Begin deserialization: ");
     PRINT_HEAP();
 
-
+    deserializeJson(*_json, *stream);
     
 
     DEBUG_PRINT("End deserialization: ");

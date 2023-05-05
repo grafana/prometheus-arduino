@@ -3,7 +3,7 @@
 
 #include <PromLokiTransport.h>
 #include "WriteRequest.h"
-#include "ReadReqeust.h"
+#include "ReadRequest.h"
 #include <ArduinoHttpClient.h>
 #include "PromDebug.h"
 
@@ -34,7 +34,8 @@ public:
 
     bool begin();
     SendResult send(WriteRequest& req);
-    SendResult query(ReadRequest& req);
+    SendResult instantQuery(ReadRequest& req);
+    SendResult rangeQuery(ReadRequest& req);
 
     char* errmsg;
 
@@ -54,7 +55,7 @@ protected:
     uint16_t _connectCount = 0;
 
     SendResult _send(uint8_t* entry, size_t len);
-    SendResult _query(ReadRequest& req);
+    SendResult _query(char* path, ReadRequest& req);
 };
 
 

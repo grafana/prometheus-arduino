@@ -178,12 +178,17 @@ PromClient::SendResult PromClient::_send(uint8_t* entry, size_t len) {
     return PromClient::SendResult::SUCCESS;
 };
 
-PromClient::SendResult PromClient::query(ReadRequest& req) {
+PromClient::SendResult PromClient::instantQuery(ReadRequest& req) {
     errmsg = nullptr;
-    return _query(req);
+    return _query("/api/v1/query", req);
 };
 
-PromClient::SendResult PromClient::_query(ReadRequest& req) {
+PromClient::SendResult PromClient::rangeQuery(ReadRequest& req) {
+    errmsg = nullptr;
+    return _query("/api/v1/query_range", req);
+};
+
+PromClient::SendResult PromClient::_query(char* path, ReadRequest& req) {
     DEBUG_PRINTLN("Querying Prometheus");
 
     // Make a HTTP request:
@@ -212,7 +217,7 @@ PromClient::SendResult PromClient::_query(ReadRequest& req) {
     // Use the ArduinoHttpClient to facilitate in places.
     _httpClient->beginRequest();
     _client->print("GET ");
-    _client->print(_readPath);
+    _client->print(path);
     _client->println(" HTTP/1.1");
     _client->print("Host: ");
     _client->println(_url);
@@ -223,8 +228,8 @@ PromClient::SendResult PromClient::_query(ReadRequest& req) {
     }
     _client->print("User-Agent: ");
     _client->println(PromUserAgent);
-    _httpClient->beginBody();
-    _client->write(entry, len);
+    // _httpClient->beginBody();
+    // _client->write(entry, len);
     _client->println();
 
 
@@ -253,6 +258,7 @@ PromClient::SendResult PromClient::_query(ReadRequest& req) {
         // and also because it doesn't understand a 204 response code not having a content-length
         // header and will wait until a timeout for additional bytes.
         while (_client->available()) {
+            
             char c = _client->read();
             DEBUG_PRINT(c);
         }
