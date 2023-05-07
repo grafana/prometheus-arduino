@@ -73,6 +73,7 @@ int16_t ReadRequest::fromHttpStream(Stream* stream) {
 
             int64_t ts = obj["value"][0].as<int64_t>();
             double val = obj["value"][1].as<double>();
+            _series[tsPointer]->resetSamples();
             _series[tsPointer]->addSample(ts, val);
             tsPointer++;
             // If there are more series than we allocated, overwrite the last one
