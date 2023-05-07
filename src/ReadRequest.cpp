@@ -37,7 +37,16 @@ int16_t ReadRequest::fromHttpStream(Stream* stream) {
     DEBUG_PRINT("Begin deserialization: ");
     PRINT_HEAP();
 
-    deserializeJson(*_json, *stream);
+    DeserializationError err = deserializeJson(*_json, *stream);
+    if (err != DeserializationError::Ok) {
+        DEBUG_PRINT("Failed to deserialize json: ");
+        DEBUG_PRINTLN(err.c_str());
+        errmsg = (char*)"failed to deserialize json, enable debug logging for more info.";
+        return -1;
+    }
+
+    DEBUG_PRINT("Deserialized json: ");
+    DEBUG_PRINTLN(_json->as<String>());
     
 
     DEBUG_PRINT("End deserialization: ");

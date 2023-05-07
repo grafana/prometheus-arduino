@@ -180,16 +180,50 @@ PromClient::SendResult PromClient::_send(uint8_t* entry, size_t len) {
 
 PromClient::SendResult PromClient::instantQuery(ReadRequest& req, char* query, uint16_t queryLen, uint16_t time) {
     errmsg = nullptr;
-    return _query("/api/v1/query", req, query, queryLen, time, 0, 0);
+    return _query("/api/prom/api/v1/query", req, query, queryLen, time, 0, 0);
 };
 
 PromClient::SendResult PromClient::rangeQuery(ReadRequest& req, char* query, uint16_t queryLen, uint16_t start, uint16_t end) {
     errmsg = nullptr;
-    return _query("/api/v1/query_range", req, query, queryLen, 0, start, end);
+    return _query("/api/prom/api/v1/query_range", req, query, queryLen, 0, start, end);
+}
+
+
+uint16_t PromClient::encodedLength(char* str, uint16_t len)
+{
+    uint16_t encodedLen = 0;
+    for (int i = 0; i < len; i++) {
+        char c = str[i];
+        if (isAlphaNumeric(c) || (c == '-') || (c == '.') || (c == '_') || (c == '~')) {
+            encodedLen++;
+        } else {
+            encodedLen += 3;
+        }
+    }
+    // Add one more byte for the null terminator
+    return encodedLen+1;
 }
 
 void PromClient::urlEncode(char* str, uint16_t len, char* output){
+String encoded;
 
+    uint16_t outPos = 0;
+
+    for (int i = 0; i < len; i++) {
+        char c = str[i];
+
+        const char HEX_DIGIT_MAPPER[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+
+        if (isAlphaNumeric(c) || (c == '-') || (c == '.') || (c == '_') || (c == '~')) {
+            output[outPos++] = c;
+        } else {
+            output[outPos++] = '%';
+            output[outPos++] = HEX_DIGIT_MAPPER[(c >> 4) & 0xf];
+            output[outPos++] = HEX_DIGIT_MAPPER[(c & 0x0f)];
+        }
+    }
+
+    output[outPos] = '\0';
 };
 
 PromClient::SendResult PromClient::_query(char* path, ReadRequest& req, char* query, uint16_t queryLen, uint16_t time, uint16_t start, uint16_t end) {
@@ -217,13 +251,18 @@ PromClient::SendResult PromClient::_query(char* path, ReadRequest& req, char* qu
         }
     }
 
+    uint16_t encodedLen = PromClient::encodedLength(query, queryLen);
+    char encodedQuery[encodedLen];
+    PromClient::urlEncode(query, queryLen, encodedQuery);
+    Serial.println(encodedQuery);
+
     // Do a lot of this manually to avoid sending headers and things we don't want to send
     // Use the ArduinoHttpClient to facilitate in places.
     _httpClient->beginRequest();
     _client->print("GET ");
     _client->print(path);
     _client->print("?query=");
-    _client->write((uint8_t*)query, queryLen);
+    _client->write((uint8_t*)encodedQuery, strlen(encodedQuery));
     if (time != 0) {
         _client->print("&time=");
         _client->print(time);
@@ -239,16 +278,14 @@ PromClient::SendResult PromClient::_query(char* path, ReadRequest& req, char* qu
     _client->println(" HTTP/1.1");
     _client->print("Host: ");
     _client->println(_url);
-    // _client->println("Content-Type: application/x-protobuf");
-    // _client->println("Content-Encoding: snappy");
+    // _client->println("Content-Type: application/json");
     if (_user && _pass) {
         _httpClient->sendBasicAuth(_user, _pass);
     }
     _client->print("User-Agent: ");
     _client->println(PromUserAgent);
-    // _httpClient->beginBody();
-    // _client->write(entry, len);
-    _client->println();
+    // _client->println();
+    _httpClient->endRequest();
 
 
     DEBUG_PRINTLN("Sent, waiting for response");
@@ -271,27 +308,34 @@ PromClient::SendResult PromClient::_query(char* path, ReadRequest& req, char* qu
     }
     int statusClass = statusCode / 100;
     if (statusClass == 2) {
-        DEBUG_PRINTLN("Prom Send Succeeded, reading response.");
+        DEBUG_PRINTLN("Prom Query Succeeded, reading response.");
+        _httpClient->skipResponseHeaders();
+        // TODO handle error better
         req.fromHttpStream(_client);
+        // In case of error, read the response body to finish so we can process another connection.
+        while (_client->available()) {
+            char c = _client->read();
+            DEBUG_PRINT(c);
+        }
     }
     else if (statusClass == 4) {
-        DEBUG_PRINT("Prom Send Failed with code: ");
+        DEBUG_PRINT("Prom Query Failed with code: ");
         DEBUG_PRINTLN(statusCode);
         while (_client->available()) {
             char c = _client->read();
             DEBUG_PRINT(c);
         }
-        errmsg = (char*)"Failed to send to prometheus, 4xx response";
+        errmsg = (char*)"Failed to query prometheus, 4xx response";
         return PromClient::SendResult::FAILED_DONT_RETRY;
     }
     else {
-        DEBUG_PRINT("Prom Send Failed with code: ");
+        DEBUG_PRINT("Prom Query Failed with code: ");
         DEBUG_PRINTLN(statusCode);
         while (_client->available()) {
             char c = _client->read();
             DEBUG_PRINT(c);
         }
-        errmsg = (char*)"Failed to send to prometheus, 5xx or unexpected status code";
+        errmsg = (char*)"Failed to query prometheus, 5xx or unexpected status code";
         return PromClient::SendResult::FAILED_RETRYABLE;
     }
     return PromClient::SendResult::SUCCESS;

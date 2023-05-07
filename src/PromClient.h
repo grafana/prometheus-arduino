@@ -37,6 +37,7 @@ public:
     SendResult instantQuery(ReadRequest& req, char* query, uint16_t queryLen, uint16_t time = 0);
     SendResult rangeQuery(ReadRequest& req, char* query, uint16_t queryLen, uint16_t start, uint16_t end);
 
+    uint16_t encodedLength(char* str, uint16_t len);
     void urlEncode(char* str, uint16_t len, char* output);
 
     char* errmsg;
