@@ -254,7 +254,6 @@ PromClient::SendResult PromClient::_query(char* path, ReadRequest& req, char* qu
     uint16_t encodedLen = PromClient::encodedLength(query, queryLen);
     char encodedQuery[encodedLen];
     PromClient::urlEncode(query, queryLen, encodedQuery);
-    Serial.println(encodedQuery);
 
     // Do a lot of this manually to avoid sending headers and things we don't want to send
     // Use the ArduinoHttpClient to facilitate in places.

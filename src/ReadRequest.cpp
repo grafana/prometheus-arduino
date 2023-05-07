@@ -45,8 +45,43 @@ int16_t ReadRequest::fromHttpStream(Stream* stream) {
         return -1;
     }
 
-    DEBUG_PRINT("Deserialized json: ");
-    DEBUG_PRINTLN(_json->as<String>());
+    // DEBUG_PRINT("Deserialized json: ");
+    // DEBUG_PRINTLN(_json->as<String>());
+
+    DynamicJsonDocument doc = *_json;
+
+    const char* resultTupe = doc["data"]["resultType"].as<const char*>();
+    JsonArray result = doc["data"]["result"].as<JsonArray>();
+
+    if (strcmp(resultTupe, "vector") == 0) {
+        // Each element in the result is a TimeSeries
+        uint8_t tsPointer = 0;
+        for (JsonVariant v : result) {
+            JsonObject obj = v.as<JsonObject>();
+            JsonObject metric = obj["metric"].as<JsonObject>();
+            uint8_t labelPos = 0;
+            for (JsonPair p : metric) {
+                const char* key = p.key().c_str();
+                const char* value = p.value().as<const char*>();
+                if(strcmp(key, "__name__") == 0) {
+                    _series[tsPointer]->setName((char*)value, strlen(value));
+                    continue;
+                }
+                _series[tsPointer]->setLabel(labelPos, (char*)key, strlen(key), (char*)value, strlen(value));
+                labelPos++;
+            }
+
+            int64_t ts = obj["value"][0].as<int64_t>();
+            double val = obj["value"][1].as<double>();
+            _series[tsPointer]->addSample(ts, val);
+            tsPointer++;
+            // If there are more series than we allocated, overwrite the last one
+            // TODO: should we error here instead?
+            if (tsPointer >= _seriesCount) {
+                tsPointer = _seriesCount - 1;
+            }
+        }
+    }
     
 
     DEBUG_PRINT("End deserialization: ");

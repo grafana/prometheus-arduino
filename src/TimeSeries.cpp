@@ -109,6 +109,11 @@ TimeSeries::TimeSeries(uint16_t batchSize, uint16_t maxNameLen, uint16_t maxlLab
         _labels[i] = l;
     }
     _numLabels = numLabels;
+    _batch = new TimeSeries::Sample * [batchSize];
+    for(int i = 0; i < batchSize; i++) {
+        TimeSeries::Sample* s = new TimeSeries::Sample();
+        _batch[i] = s;
+    }
 }
 
 TimeSeries::~TimeSeries() {
@@ -168,6 +173,14 @@ bool TimeSeries::setName(const char* name, uint16_t nameLen) {
 
 TimeSeries::Label* TimeSeries::getLabel(uint8_t pos) {
     return _labels[pos];
+}
+
+TimeSeries::Sample* TimeSeries::getSample(uint16_t pos){
+    // TODO better way to handle this than returning nullptr?
+    if (pos > _batchSize-1) {
+        return nullptr;
+    }
+    return _batch[pos];
 }
 
 TimeSeries::Sample::Sample() {

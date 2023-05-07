@@ -24,6 +24,7 @@ public:
     bool setName(const char* name, uint16_t nameLen);
 
     TimeSeries::Label* getLabel(uint8_t pos);
+    TimeSeries::Sample* getSample(uint16_t pos);
 
     char* errmsg;
 

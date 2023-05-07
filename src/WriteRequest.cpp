@@ -159,6 +159,7 @@ bool WriteRequest::callback_decode_timeseries(pb_istream_t* istream,
         i++;
         // We decode everything, but if there are more timeseries than we have
         // allocated, we overrwite the last one
+        // TODO should we error here instead?
         if (i >= st->seriesCnt) {
             i = st->seriesCnt - 1;
         }
