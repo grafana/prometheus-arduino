@@ -23,6 +23,7 @@ public:
 
     void setUrl(const char* url);
     void setPath(char* path);
+    void setQueryPath(const char* path);
     void setPort(uint16_t port);
     void setUser(const char* user);
     void setPass(const char* pass);
@@ -52,6 +53,7 @@ protected:
 
     const char* _url;
     char* _path;
+    const char* _queryPath;
     uint16_t _port;
     const char* _user;
     const char* _pass;

@@ -13,6 +13,9 @@ void PromClient::setUrl(const char* url) {
 };
 void PromClient::setPath(char* path) {
     _path = path;
+}
+void PromClient::setQueryPath(const char* path){
+    _queryPath = path;
 };
 void PromClient::setPort(uint16_t port) {
     _port = port;
@@ -180,12 +183,18 @@ PromClient::SendResult PromClient::_send(uint8_t* entry, size_t len) {
 
 PromClient::SendResult PromClient::instantQuery(ReadRequest& req, char* query, uint16_t queryLen, uint16_t time) {
     errmsg = nullptr;
-    return _query("/api/prom/api/v1/query", req, query, queryLen, time, 0, 0);
+    char tmp[50];
+    strcpy(tmp, _queryPath);
+    strcat(tmp, "/query");
+    return _query(tmp, req, query, queryLen, time, 0, 0);
 };
 
 PromClient::SendResult PromClient::rangeQuery(ReadRequest& req, char* query, uint16_t queryLen, uint16_t start, uint16_t end) {
     errmsg = nullptr;
-    return _query("/api/prom/api/v1/query_range", req, query, queryLen, 0, start, end);
+    char tmp[50];
+    strcpy(tmp, _queryPath);
+    strcat(tmp, "/query_range");
+    return _query(tmp, req, query, queryLen, 0, start, end);
 }
 
 
