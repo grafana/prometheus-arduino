@@ -103,7 +103,8 @@ TimeSeries::TimeSeries(uint16_t batchSize, const char* name, const char* labels)
 
 TimeSeries::TimeSeries(uint16_t batchSize, uint16_t maxNameLen, uint16_t maxlLabelKeyLen, uint16_t maxLabelValLen, uint8_t numLabels): _batchSize(batchSize) {
     _name = (char*)malloc(sizeof(char) * (maxNameLen + 1));
-    _labels = new TimeSeries::Label * [_numLabels];
+    _maxNameLen = maxNameLen;
+    _labels = new TimeSeries::Label * [numLabels];
     for (int i = 0; i < numLabels; i++) {
         TimeSeries::Label* l = new TimeSeries::Label(maxlLabelKeyLen, maxLabelValLen);
         _labels[i] = l;
@@ -144,7 +145,8 @@ void TimeSeries::resetSamples() {
 }
 
 bool TimeSeries::setLabel(uint8_t pos, char* key, uint16_t keyLen, char* val, uint16_t valLen) {
-    if (pos > _numLabels) {
+    // pos is zero indexed, numLabels is not
+    if (pos >= _numLabels) {
         errmsg = (char*)"label position out of range";
         return false;
     }

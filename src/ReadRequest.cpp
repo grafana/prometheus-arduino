@@ -67,6 +67,7 @@ int16_t ReadRequest::fromHttpStream(Stream* stream) {
                     _series[tsPointer]->setName((char*)value, strlen(value));
                     continue;
                 }
+                //TODO should handle the error if the label doesn't get set properly.
                 _series[tsPointer]->setLabel(labelPos, (char*)key, strlen(key), (char*)value, strlen(value));
                 labelPos++;
             }
