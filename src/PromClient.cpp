@@ -60,9 +60,14 @@ bool PromClient::begin() {
         errmsg = (char*)"you must set a transport with setTransport() first";
         return false;
     }
-    _client = _transport->getClient();
-
+    if (!_client) {
+        _client = _transport->getClient();
+    }
+    
     // Create the HttpClient
+    if (_httpClient) {
+        delete _httpClient;
+    }
     _httpClient = new HttpClient(*_client, _url, _port);
     _httpClient->setTimeout(15000);
     _httpClient->setHttpResponseTimeout(15000);
