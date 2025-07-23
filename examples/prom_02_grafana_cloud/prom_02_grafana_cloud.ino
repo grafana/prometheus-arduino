@@ -59,7 +59,7 @@ void setup() {
     }
 
     // Configure the client
-    client.setUrl(GC_URL);
+    client.setUrl(GC_HOST);
     client.setPath((char*)GC_PATH);
     client.setPort(GC_PORT);
     client.setUser(GC_USER);
