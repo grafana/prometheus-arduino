@@ -16,15 +16,15 @@ jobs:
       image: slimbean/arduino-cli:latest
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       
       - name: Checkout SnappyProto
-        uses: actions/checkout@v2
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           repository: grafana/arduino-snappy-proto
           path: arduino-snappy-proto
       - name: Checkout PromLokiTransport
-        uses: actions/checkout@v2
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           repository: grafana/arduino-prom-loki-transport
           path: arduino-prom-loki-transport
