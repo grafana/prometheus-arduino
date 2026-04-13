@@ -13,18 +13,18 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: slimbean/arduino-cli:latest
+      image: slimbean/arduino-cli:latest@sha256:4c55b8098de821da809087b565bc9c19b46359d9738198bf71ec6013c867dedd
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2
       
       - name: Checkout SnappyProto
-        uses: actions/checkout@v2
+        uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2
         with:
           repository: grafana/arduino-snappy-proto
           path: arduino-snappy-proto
       - name: Checkout PromLokiTransport
-        uses: actions/checkout@v2
+        uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2
         with:
           repository: grafana/arduino-prom-loki-transport
           path: arduino-prom-loki-transport
